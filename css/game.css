@@ -42,7 +42,16 @@ body {
   animation: slowlyAppear 0.5s linear;
 }
 
+.slowlyDisappear {
+  animation: slowlyDisappear 0.5s linear;
+}
+
 @keyframes slowlyAppear {
   from {opacity: 0.1;}
   to {opacity: 1;}
+}
+
+@keyframes slowlyDisappear {
+  from {opacity: 1;}
+  to {opacity: 0.1;}
 }

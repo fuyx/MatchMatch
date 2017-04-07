@@ -5,6 +5,13 @@ interface SupportedLanguages {
   hi: string, es: string,
 };
 
+interface IDisappear {
+  row1: number;
+  col1: number;
+  row2: number;
+  col2: number;
+}
+
 module game {
   export let $rootScope: angular.IScope = null;
   export let $timeout: angular.ITimeoutService = null;
@@ -21,6 +28,9 @@ module game {
   export let proposals: number[][] = null;
   export let yourPlayerInfo: IPlayerInfo = null;
   export let colors : string[] = [];
+  export let clickCount = 0;
+  export let neededDisappear = false;
+  export let disappear: IDisappear = null;
 
   export function init($rootScope_: angular.IScope, $timeout_: angular.ITimeoutService) {
     $rootScope = $rootScope_;
@@ -104,6 +114,7 @@ module game {
      // Only one move/proposal per updateUI
     didMakeMove = playerIdToProposal && playerIdToProposal[yourPlayerInfo.playerId] != undefined;
     yourPlayerInfo = params.yourPlayerInfo;
+    clickCount = 0;
     proposals = playerIdToProposal ? getProposalsBoard(playerIdToProposal) : null;
     if (playerIdToProposal) {
       // If only proposals changed, then return.
@@ -120,8 +131,15 @@ module game {
     if (isFirstMove()) {
       state = gameLogic.getInitialState();
     } else {
-      gameLogic.checkMatch(state);
+      setTimeout(()=>{if(!gameLogic.checkMatch(state)) {
+        neededDisappear = true;
+        disappear = {row1: state.delta1.row, col1: state.delta1.col, 
+          row2: state.delta2.row, col2: state.delta2.col};
+      }}, 200);
     }
+
+    log.info(game)  
+
     // We calculate the AI move only after the animation finishes,
     // because if we call aiService now
     // then the animation will be paused until the javascript finishes.
@@ -163,7 +181,7 @@ module game {
     didMakeMove = true;
     
     if (!proposals) {
-      gameService.makeMove(move, null);
+      setTimeout(()=>{gameService.makeMove(move, null)}, 200);
     } else {
       // TODO implement community game later.
     }
@@ -199,6 +217,9 @@ module game {
 
   export function cellClicked(row: number, col: number): void {
     log.info("Clicked on cell:", row, col);
+    if (clickCount > 2) {
+      return;
+    }
     if (!isHumanTurn()) return;
     let nextMove: IMove = null;
     try {
@@ -209,6 +230,7 @@ module game {
       log.info(["Cell is already full in position:", row, col]);
       return;
     }
+    clickCount++;
     // Move is legal, make it!
     makeMove(nextMove);
   }
@@ -231,8 +253,24 @@ module game {
   }
 
   export function shouldSlowlyAppear(row: number, col: number): boolean {
+    // log.info("shouldSlowlyAppear", row, col);
     return (state.delta1 && state.delta1.row === row && state.delta1.col === col) ||
       (state.delta2 && state.delta2.row === row && state.delta2.col === col);
+  }
+
+  export function shouldSlowlyDisappear(row: number, col: number): boolean {
+    log.info("shouldSlowlyDisappear", disappear, row, col,
+   ((disappear.row1 === row && disappear.col1 === col) || 
+    (disappear.row2 === row && disappear.col2 === col)));
+    let ret = neededDisappear && 
+    ((disappear.row1 === row && disappear.col1 === col) || 
+    (disappear.row2 === row && disappear.col2 === col)) &&
+      clickCount === 0;
+    if (ret === true) {
+      log.info("shouldSlowlyDisappear:", row, col);
+    }
+    return ret;
+    // return true;
   }
 
   export function getColor(row : number, col : number): string {
