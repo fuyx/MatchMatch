@@ -1,59 +1,46 @@
 module aiService {
+  export const DIFFICULTY = 0.3;
   /** Returns the move that the computer player should do for the given state in move. */
   export function findComputerMove(move: IMove): IMove {
-    return createComputerMove(move,
-        // at most 1 second for the AI to choose a move (but might be much quicker)
-        {millisecondsLimit: 1000});
-  }
-
-  /**
-   * Returns all the possible moves for the given state and turnIndexBeforeMove.
-   * Returns an empty array if the game is over.
-   */
-  export function getPossibleMoves(state: IState, turnIndexBeforeMove: number): IMove[] {
-    let possibleMoves: IMove[] = [];
-    for (let i = 0; i < gameLogic.ROWS; i++) {
-      for (let j = 0; j < gameLogic.COLS; j++) {
-        for (let ii = 0; ii < gameLogic.ROWS; ii++) {
-          for (let jj = 0; jj < gameLogic.COLS; jj++) {
-            try {
-              let possibleMove = gameLogic.createMove(state, i, j, turnIndexBeforeMove);
-              possibleMove = gameLogic.createMove(possibleMove.state, ii, jj, turnIndexBeforeMove)
-              possibleMoves.push(possibleMove);
-            } catch (e) {
-              // The cell in that position was full.
+    if (Math.random() > DIFFICULTY || move.state === null) { // random choose 2
+      log.info("Random choose 2 grid.")
+      let i1 = 0;
+      let j1 = 0;
+      while(move.state !== null && move.state.shownBoard[i1][j1] !== -1) {
+        i1 = Math.floor(Math.random() * gameLogic.ROWS);
+        j1 = Math.floor(Math.random() * gameLogic.COLS);
+      }
+      let possibleMove = gameLogic.createMove(move.state, i1, j1, move.turnIndex);
+      let i2 = 0;
+      let j2 = 1;
+      while(move.state !== null && (move.state.shownBoard[i2][j2] !== -1 || (i1 === i2 && j1 === j2))) {
+        i2 = Math.floor(Math.random() * gameLogic.ROWS);
+        j2 = Math.floor(Math.random() * gameLogic.COLS);
+      }
+      log.info(i1,j1,i2,j2)
+      possibleMove = gameLogic.createMove(possibleMove.state, i2, j2,  move.turnIndex);
+      return possibleMove;
+    } else {
+      log.info("Find a match.")
+      for (let i = 0; i < gameLogic.ROWS; i++) {
+        for (let j = 0; j < gameLogic.COLS; j++) {
+          if (move.state.shownBoard[i][j] === -1) {
+            let target = move.state.board[i][j];
+            let possibleMove = gameLogic.createMove(move.state, i, j, move.turnIndex);
+            for (let i2 = 0; i2 < gameLogic.ROWS; i2++) {
+              for (let j2 = 0; j2 < gameLogic.COLS; j2++) {
+                if (move.state.shownBoard[i2][j2] === -1 && !(i2 === i && j2 === j) &&
+                move.state.board[i2][j2] === target) {
+                  log.info(i, j, i2, j2)
+                  possibleMove = gameLogic.createMove(possibleMove.state, i2, j2,  move.turnIndex);
+                  return possibleMove;
+                }
+              }
             }
           }
         }
       }
+      log.info("!!!");
     }
-    return possibleMoves;
-  }
-
-  /**
-   * Returns the move that the computer player should do for the given state.
-   * alphaBetaLimits is an object that sets a limit on the alpha-beta search,
-   * and it has either a millisecondsLimit or maxDepth field:
-   * millisecondsLimit is a time limit, and maxDepth is a depth limit.
-   */
-  export function createComputerMove(
-      move: IMove, alphaBetaLimits: IAlphaBetaLimits): IMove {
-    // We use alpha-beta search, where the search states are TicTacToe moves.
-    return alphaBetaService.alphaBetaDecision(
-        move, move.turnIndex, getNextStates, getStateScoreForIndex0, null, alphaBetaLimits);
-  }
-
-  function getStateScoreForIndex0(move: IMove, playerIndex: number): number {
-    let endMatchScores = move.endMatchScores;
-    if (endMatchScores) {
-      return endMatchScores[0] > endMatchScores[1] ? Number.POSITIVE_INFINITY
-          : endMatchScores[0] < endMatchScores[1] ? Number.NEGATIVE_INFINITY
-          : 0;
-    }
-    return 0;
-  }
-
-  function getNextStates(move: IMove, playerIndex: number): IMove[] {
-    return getPossibleMoves(move.state, playerIndex);
   }
 }
