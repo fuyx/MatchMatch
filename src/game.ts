@@ -131,19 +131,19 @@ module game {
     if (isFirstMove()) {
       state = gameLogic.getInitialState();
     } else {
-      if (isComputerTurn){
-        setTimeout(()=>{if(!gameLogic.checkMatch(state)) {
-          neededDisappear = true;
-          disappear = {row1: state.delta1.row, col1: state.delta1.col, 
-            row2: state.delta2.row, col2: state.delta2.col};
-        }}, 50);
-      } else {
+      if (params.playMode === 'passAndPlay'){
         if(!gameLogic.checkMatch(state)) {
           neededDisappear = true;
           disappear = {row1: state.delta1.row, col1: state.delta1.col, 
             row2: state.delta2.row, col2: state.delta2.col
           }
         }
+      } else {
+        setTimeout(()=>{if(!gameLogic.checkMatch(state)) {
+          neededDisappear = true;
+          disappear = {row1: state.delta1.row, col1: state.delta1.col, 
+            row2: state.delta2.row, col2: state.delta2.col};
+        }}, 50);
       }
     }
 

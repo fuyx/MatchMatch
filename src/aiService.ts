@@ -14,10 +14,16 @@ module aiService {
     let possibleMoves: IMove[] = [];
     for (let i = 0; i < gameLogic.ROWS; i++) {
       for (let j = 0; j < gameLogic.COLS; j++) {
-        try {
-          possibleMoves.push(gameLogic.createMove(state, i, j, turnIndexBeforeMove));
-        } catch (e) {
-          // The cell in that position was full.
+        for (let ii = 0; ii < gameLogic.ROWS; ii++) {
+          for (let jj = 0; jj < gameLogic.COLS; jj++) {
+            try {
+              let possibleMove = gameLogic.createMove(state, i, j, turnIndexBeforeMove);
+              possibleMove = gameLogic.createMove(possibleMove.state, ii, jj, turnIndexBeforeMove)
+              possibleMoves.push(possibleMove);
+            } catch (e) {
+              // The cell in that position was full.
+            }
+          }
         }
       }
     }
