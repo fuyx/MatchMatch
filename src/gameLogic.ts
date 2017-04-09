@@ -35,7 +35,7 @@ module gameLogic {
       board[i] = [];
       shownBoard[i] = [];
       for (let j = 0; j < COLS; j++) {
-        let n = 0;
+        let n = Math.floor(Math.random() * SIZE);
         while (counts[n] >= 2) {
           n = Math.floor(Math.random() * SIZE);
         }

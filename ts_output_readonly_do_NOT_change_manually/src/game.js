@@ -15,6 +15,9 @@ var game;
     game.proposals = null;
     game.yourPlayerInfo = null;
     game.colors = [];
+    game.clickCount = 0;
+    game.neededDisappear = false;
+    game.disappear = null;
     function init($rootScope_, $timeout_) {
         game.$rootScope = $rootScope_;
         game.$timeout = $timeout_;
@@ -95,6 +98,7 @@ var game;
         // Only one move/proposal per updateUI
         game.didMakeMove = playerIdToProposal && playerIdToProposal[game.yourPlayerInfo.playerId] != undefined;
         game.yourPlayerInfo = params.yourPlayerInfo;
+        game.clickCount = 0;
         game.proposals = playerIdToProposal ? getProposalsBoard(playerIdToProposal) : null;
         if (playerIdToProposal) {
             // If only proposals changed, then return.
@@ -112,8 +116,25 @@ var game;
             game.state = gameLogic.getInitialState();
         }
         else {
-            gameLogic.checkMatch(game.state);
+            if (params.playMode === 'passAndPlay') {
+                if (!gameLogic.checkMatch(game.state)) {
+                    game.neededDisappear = true;
+                    game.disappear = { row1: game.state.delta1.row, col1: game.state.delta1.col,
+                        row2: game.state.delta2.row, col2: game.state.delta2.col
+                    };
+                }
+            }
+            else {
+                setTimeout(function () {
+                    if (!gameLogic.checkMatch(game.state)) {
+                        game.neededDisappear = true;
+                        game.disappear = { row1: game.state.delta1.row, col1: game.state.delta1.col,
+                            row2: game.state.delta2.row, col2: game.state.delta2.col };
+                    }
+                }, 50);
+            }
         }
+        log.info(game);
         // We calculate the AI move only after the animation finishes,
         // because if we call aiService now
         // then the animation will be paused until the javascript finishes.
@@ -152,7 +173,7 @@ var game;
         }
         game.didMakeMove = true;
         if (!game.proposals) {
-            gameService.makeMove(move, null);
+            setTimeout(function () { gameService.makeMove(move, null); }, 200);
         }
         else {
             // TODO implement community game later.
@@ -182,6 +203,9 @@ var game;
     }
     function cellClicked(row, col) {
         log.info("Clicked on cell:", row, col);
+        if (game.clickCount > 2) {
+            return;
+        }
         if (!isHumanTurn())
             return;
         var nextMove = null;
@@ -193,6 +217,7 @@ var game;
             log.info(["Cell is already full in position:", row, col]);
             return;
         }
+        game.clickCount++;
         // Move is legal, make it!
         makeMove(nextMove);
     }
@@ -215,10 +240,25 @@ var game;
     }
     game.shouldShowImage = shouldShowImage;
     function shouldSlowlyAppear(row, col) {
+        // log.info("shouldSlowlyAppear", row, col);
         return (game.state.delta1 && game.state.delta1.row === row && game.state.delta1.col === col) ||
             (game.state.delta2 && game.state.delta2.row === row && game.state.delta2.col === col);
     }
     game.shouldSlowlyAppear = shouldSlowlyAppear;
+    function shouldSlowlyDisappear(row, col) {
+        log.info("shouldSlowlyDisappear", game.disappear, row, col, ((game.disappear.row1 === row && game.disappear.col1 === col) ||
+            (game.disappear.row2 === row && game.disappear.col2 === col)));
+        var ret = game.neededDisappear &&
+            ((game.disappear.row1 === row && game.disappear.col1 === col) ||
+                (game.disappear.row2 === row && game.disappear.col2 === col)) &&
+            game.clickCount === 0;
+        if (ret === true) {
+            log.info("shouldSlowlyDisappear:", row, col);
+        }
+        return ret;
+        // return true;
+    }
+    game.shouldSlowlyDisappear = shouldSlowlyDisappear;
     function getColor(row, col) {
         var idx = game.state.board[row][col];
         return game.colors[idx];

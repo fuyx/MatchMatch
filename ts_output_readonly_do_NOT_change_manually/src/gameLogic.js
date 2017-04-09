@@ -21,7 +21,7 @@ var gameLogic;
             board[i] = [];
             shownBoard[i] = [];
             for (var j = 0; j < gameLogic.COLS; j++) {
-                var n = 0;
+                var n = Math.floor(Math.random() * gameLogic.SIZE);
                 while (counts[n] >= 2) {
                     n = Math.floor(Math.random() * gameLogic.SIZE);
                 }
@@ -133,8 +133,10 @@ var gameLogic;
             if (board[delta1.row][delta1.col] != board[delta2.row][delta2.col]) {
                 state.shownBoard[delta1.row][delta1.col] = -1;
                 state.shownBoard[delta2.row][delta2.col] = -1;
+                return false;
             }
         }
+        return true;
     }
     gameLogic.checkMatch = checkMatch;
     function createInitialMove() {

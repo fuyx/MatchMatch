@@ -1,53 +1,50 @@
 var aiService;
 (function (aiService) {
+    aiService.DIFFICULTY = 0.3;
     /** Returns the move that the computer player should do for the given state in move. */
     function findComputerMove(move) {
-        return createComputerMove(move, 
-        // at most 1 second for the AI to choose a move (but might be much quicker)
-        { millisecondsLimit: 1000 });
-    }
-    aiService.findComputerMove = findComputerMove;
-    /**
-     * Returns all the possible moves for the given state and turnIndexBeforeMove.
-     * Returns an empty array if the game is over.
-     */
-    function getPossibleMoves(state, turnIndexBeforeMove) {
-        var possibleMoves = [];
-        for (var i = 0; i < gameLogic.ROWS; i++) {
-            for (var j = 0; j < gameLogic.COLS; j++) {
-                try {
-                    possibleMoves.push(gameLogic.createMove(state, i, j, turnIndexBeforeMove));
-                }
-                catch (e) {
-                    // The cell in that position was full.
+        if (Math.random() > aiService.DIFFICULTY || move.state === null) {
+            log.info("Random choose 2 grid.");
+            var i1 = 0;
+            var j1 = 0;
+            while (move.state !== null && move.state.shownBoard[i1][j1] !== -1) {
+                i1 = Math.floor(Math.random() * gameLogic.ROWS);
+                j1 = Math.floor(Math.random() * gameLogic.COLS);
+            }
+            var possibleMove = gameLogic.createMove(move.state, i1, j1, move.turnIndex);
+            var i2 = 0;
+            var j2 = 1;
+            while (move.state !== null && (move.state.shownBoard[i2][j2] !== -1 || (i1 === i2 && j1 === j2))) {
+                i2 = Math.floor(Math.random() * gameLogic.ROWS);
+                j2 = Math.floor(Math.random() * gameLogic.COLS);
+            }
+            log.info(i1, j1, i2, j2);
+            possibleMove = gameLogic.createMove(possibleMove.state, i2, j2, move.turnIndex);
+            return possibleMove;
+        }
+        else {
+            log.info("Find a match.");
+            for (var i = 0; i < gameLogic.ROWS; i++) {
+                for (var j = 0; j < gameLogic.COLS; j++) {
+                    if (move.state.shownBoard[i][j] === -1) {
+                        var target = move.state.board[i][j];
+                        var possibleMove = gameLogic.createMove(move.state, i, j, move.turnIndex);
+                        for (var i2 = 0; i2 < gameLogic.ROWS; i2++) {
+                            for (var j2 = 0; j2 < gameLogic.COLS; j2++) {
+                                if (move.state.shownBoard[i2][j2] === -1 && !(i2 === i && j2 === j) &&
+                                    move.state.board[i2][j2] === target) {
+                                    log.info(i, j, i2, j2);
+                                    possibleMove = gameLogic.createMove(possibleMove.state, i2, j2, move.turnIndex);
+                                    return possibleMove;
+                                }
+                            }
+                        }
+                    }
                 }
             }
+            log.info("!!!");
         }
-        return possibleMoves;
     }
-    aiService.getPossibleMoves = getPossibleMoves;
-    /**
-     * Returns the move that the computer player should do for the given state.
-     * alphaBetaLimits is an object that sets a limit on the alpha-beta search,
-     * and it has either a millisecondsLimit or maxDepth field:
-     * millisecondsLimit is a time limit, and maxDepth is a depth limit.
-     */
-    function createComputerMove(move, alphaBetaLimits) {
-        // We use alpha-beta search, where the search states are TicTacToe moves.
-        return alphaBetaService.alphaBetaDecision(move, move.turnIndex, getNextStates, getStateScoreForIndex0, null, alphaBetaLimits);
-    }
-    aiService.createComputerMove = createComputerMove;
-    function getStateScoreForIndex0(move, playerIndex) {
-        var endMatchScores = move.endMatchScores;
-        if (endMatchScores) {
-            return endMatchScores[0] > endMatchScores[1] ? Number.POSITIVE_INFINITY
-                : endMatchScores[0] < endMatchScores[1] ? Number.NEGATIVE_INFINITY
-                    : 0;
-        }
-        return 0;
-    }
-    function getNextStates(move, playerIndex) {
-        return getPossibleMoves(move.state, playerIndex);
-    }
+    aiService.findComputerMove = findComputerMove;
 })(aiService || (aiService = {}));
 //# sourceMappingURL=aiService.js.map
