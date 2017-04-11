@@ -31638,81 +31638,71 @@ var log = gamingPlatform.log;
 var dragAndDropService = gamingPlatform.dragAndDropService;
 var gameLogic;
 (function (gameLogic) {
-    gameLogic.ROWS = 3;
-    gameLogic.COLS = 3;
+    gameLogic.ROWS = 4;
+    gameLogic.COLS = 4;
+    gameLogic.SIZE = gameLogic.ROWS * gameLogic.COLS / 2;
     /** Returns the initial TicTacToe board, which is a ROWSxCOLS matrix containing ''. */
-    function getInitialBoard() {
+    function getInitialBoards() {
         var board = [];
+        var shownBoard = [];
+        var counts = [];
+        for (var i = 0; i < gameLogic.SIZE; i++) {
+            counts[i] = 0;
+        }
         for (var i = 0; i < gameLogic.ROWS; i++) {
             board[i] = [];
+            shownBoard[i] = [];
             for (var j = 0; j < gameLogic.COLS; j++) {
-                board[i][j] = '';
+                var n = Math.floor(Math.random() * gameLogic.SIZE);
+                while (counts[n] >= 2) {
+                    n = Math.floor(Math.random() * gameLogic.SIZE);
+                }
+                counts[n]++;
+                board[i][j] = n;
+                shownBoard[i][j] = -1;
             }
         }
-        return board;
+        return [board, shownBoard];
     }
-    gameLogic.getInitialBoard = getInitialBoard;
+    gameLogic.getInitialBoards = getInitialBoards;
     function getInitialState() {
-        return { board: getInitialBoard(), delta: null };
+        var initBoards = getInitialBoards();
+        return { board: initBoards[0], shownBoard: initBoards[1], delta1: null, delta2: null };
     }
     gameLogic.getInitialState = getInitialState;
     /**
-     * Returns true if the game ended in a tie because there are no empty cells.
-     * E.g., isTie returns true for the following board:
-     *     [['X', 'O', 'X'],
-     *      ['X', 'O', 'O'],
-     *      ['O', 'X', 'X']]
+     *
      */
-    function isTie(board) {
+    function hasEmptyGrid(board) {
         for (var i = 0; i < gameLogic.ROWS; i++) {
             for (var j = 0; j < gameLogic.COLS; j++) {
-                if (board[i][j] === '') {
+                if (board[i][j] === -1) {
                     // If there is an empty cell then we do not have a tie.
-                    return false;
+                    return true;
                 }
             }
         }
         // No empty cells, so we have a tie!
-        return true;
+        return false;
     }
     /**
-     * Return the winner (either 'X' or 'O') or '' if there is no winner.
-     * The board is a matrix of size 3x3 containing either 'X', 'O', or ''.
-     * E.g., getWinner returns 'X' for the following board:
-     *     [['X', 'O', ''],
-     *      ['X', 'O', ''],
-     *      ['X', '', '']]
+     *
      */
-    function getWinner(board) {
-        var boardString = '';
+    function computeScores(board) {
+        // scan the board and compute the socre
+        var score0 = 0;
+        var score1 = 0;
         for (var i = 0; i < gameLogic.ROWS; i++) {
             for (var j = 0; j < gameLogic.COLS; j++) {
-                var cell = board[i][j];
-                boardString += cell === '' ? ' ' : cell;
+                if (board[i][j] == 0) {
+                    score0++;
+                }
+                else if (board[i][j] == 1) {
+                    score1++;
+                }
             }
         }
-        var win_patterns = [
-            'XXX......',
-            '...XXX...',
-            '......XXX',
-            'X..X..X..',
-            '.X..X..X.',
-            '..X..X..X',
-            'X...X...X',
-            '..X.X.X..'
-        ];
-        for (var _i = 0, win_patterns_1 = win_patterns; _i < win_patterns_1.length; _i++) {
-            var win_pattern = win_patterns_1[_i];
-            var x_regexp = new RegExp(win_pattern);
-            var o_regexp = new RegExp(win_pattern.replace(/X/g, 'O'));
-            if (x_regexp.test(boardString)) {
-                return 'X';
-            }
-            if (o_regexp.test(boardString)) {
-                return 'O';
-            }
-        }
-        return '';
+        return [score0, score1];
     }
     /**
      * Returns the move that should be performed when player
@@ -31722,22 +31712,30 @@ var gameLogic;
         if (!stateBeforeMove) {
             stateBeforeMove = getInitialState();
         }
-        var board = stateBeforeMove.board;
-        if (board[row][col] !== '') {
+        var board = stateBeforeMove.shownBoard;
+        if (board[row][col] !== -1) {
             throw new Error("One can only make a move in an empty position!");
         }
-        if (getWinner(board) !== '' || isTie(board)) {
+        if (!hasEmptyGrid(board)) {
             throw new Error("Can only make a move if the game is not over!");
         }
         var boardAfterMove = angular.copy(board);
-        boardAfterMove[row][col] = turnIndexBeforeMove === 0 ? 'X' : 'O';
-        var winner = getWinner(boardAfterMove);
+        boardAfterMove[row][col] = turnIndexBeforeMove === 0 ? 1 : 0;
+        var scores = computeScores(boardAfterMove);
         var endMatchScores;
         var turnIndex;
-        if (winner !== '' || isTie(boardAfterMove)) {
+        if (!hasEmptyGrid(boardAfterMove)) {
             // Game over.
             turnIndex = -1;
-            endMatchScores = winner === 'X' ? [1, 0] : winner === 'O' ? [0, 1] : [0, 0];
+            if (scores[0] > scores[1]) {
+                endMatchScores = [1, 0];
+            }
+            else if (scores[0] < scores[1]) {
+                endMatchScores = [0, 1];
+            }
+            else {
+                endMatchScores = [0, 0];
+            }
         }
         else {
             // Game continues. Now it's the opponent's turn (the turn switches from 0 to 1 and 1 to 0).
@@ -31745,7 +31743,13 @@ var gameLogic;
             endMatchScores = null;
         }
         var delta = { row: row, col: col };
-        var state = { delta: delta, board: boardAfterMove };
+        var state = { delta1: delta, delta2: null, shownBoard: boardAfterMove,
+            board: stateBeforeMove.board };
+        if (stateBeforeMove.delta1 != null && stateBeforeMove.delta2 == null) {
+            state = { delta1: stateBeforeMove.delta1, delta2: delta, shownBoard: boardAfterMove,
+                board: stateBeforeMove.board };
+        }
+        log.info("gameLogic.createMove", state);
         return {
             endMatchScores: endMatchScores,
             turnIndex: turnIndex,
@@ -31753,6 +31757,20 @@ var gameLogic;
         };
     }
     gameLogic.createMove = createMove;
+    function checkMatch(state) {
+        var delta1 = state.delta1;
+        var delta2 = state.delta2;
+        var board = state.board;
+        if (delta1 != null && delta2 != null) {
+            if (board[delta1.row][delta1.col] != board[delta2.row][delta2.col]) {
+                state.shownBoard[delta1.row][delta1.col] = -1;
+                state.shownBoard[delta2.row][delta2.col] = -1;
+                return false;
+            }
+        }
+        return true;
+    }
+    gameLogic.checkMatch = checkMatch;
     function createInitialMove() {
         return { endMatchScores: null, turnIndex: 0,
             state: getInitialState() };
@@ -31782,6 +31800,10 @@ var game;
     // For community games.
     game.proposals = null;
     game.yourPlayerInfo = null;
+    game.colors = [];
+    game.clickCount = 0;
+    game.neededDisappear = false;
+    game.disappear = null;
     function init($rootScope_, $timeout_) {
         game.$rootScope = $rootScope_;
         game.$timeout = $timeout_;
@@ -31793,6 +31815,14 @@ var game;
             updateUI: updateUI,
             getStateForOgImage: null,
         });
+        game.colors[0] = "red";
+        game.colors[1] = "yellow";
+        game.colors[2] = "lime";
+        game.colors[3] = "aqua";
+        game.colors[4] = "blue";
+        game.colors[5] = "purple";
+        game.colors[6] = "gray";
+        game.colors[7] = "orange";
     }
     game.init = init;
     function registerServiceWorker() {
@@ -31854,6 +31884,7 @@ var game;
         // Only one move/proposal per updateUI
         game.didMakeMove = playerIdToProposal && playerIdToProposal[game.yourPlayerInfo.playerId] != undefined;
         game.yourPlayerInfo = params.yourPlayerInfo;
+        game.clickCount = 0;
         game.proposals = playerIdToProposal ? getProposalsBoard(playerIdToProposal) : null;
         if (playerIdToProposal) {
             // If only proposals changed, then return.
@@ -31870,6 +31901,26 @@ var game;
         if (isFirstMove()) {
             game.state = gameLogic.getInitialState();
         }
+        else {
+            if (params.playMode === 'passAndPlay') {
+                if (!gameLogic.checkMatch(game.state)) {
+                    game.neededDisappear = true;
+                    game.disappear = { row1: game.state.delta1.row, col1: game.state.delta1.col,
+                        row2: game.state.delta2.row, col2: game.state.delta2.col
+                    };
+                }
+            }
+            else {
+                setTimeout(function () {
+                    if (!gameLogic.checkMatch(game.state)) {
+                        game.neededDisappear = true;
+                        game.disappear = { row1: game.state.delta1.row, col1: game.state.delta1.col,
+                            row2: game.state.delta2.row, col2: game.state.delta2.col };
+                    }
+                }, 50);
+            }
+        }
+        log.info(game);
         // We calculate the AI move only after the animation finishes,
         // because if we call aiService now
         // then the animation will be paused until the javascript finishes.
@@ -31899,25 +31950,19 @@ var game;
         makeMove(move);
     }
     function makeMove(move) {
+        if (move.state.delta2 == null) {
+            log.info("game.makeMove -> expect 2nd click...");
+            return;
+        }
         if (game.didMakeMove) {
             return;
         }
         game.didMakeMove = true;
         if (!game.proposals) {
-            gameService.makeMove(move, null);
+            setTimeout(function () { gameService.makeMove(move, null); }, 200);
         }
         else {
-            var delta = move.state.delta;
-            var myProposal = {
-                data: delta,
-                chatDescription: '' + (delta.row + 1) + 'x' + (delta.col + 1),
-                playerInfo: game.yourPlayerInfo,
-            };
-            // Decide whether we make a move or not (if we have <currentCommunityUI.numberOfPlayersRequiredToMove-1> other proposals supporting the same thing).
-            if (game.proposals[delta.row][delta.col] < game.currentUpdateUI.numberOfPlayersRequiredToMove - 1) {
-                move = null;
-            }
-            gameService.makeMove(move, myProposal);
+            // TODO implement community game later.
         }
     }
     function isFirstMove() {
@@ -31944,40 +31989,67 @@ var game;
     }
     function cellClicked(row, col) {
         log.info("Clicked on cell:", row, col);
+        if (game.clickCount > 2) {
+            return;
+        }
         if (!isHumanTurn())
             return;
         var nextMove = null;
         try {
             nextMove = gameLogic.createMove(game.state, row, col, game.currentUpdateUI.turnIndex);
+            game.state = nextMove.state;
         }
         catch (e) {
             log.info(["Cell is already full in position:", row, col]);
             return;
         }
+        game.clickCount++;
         // Move is legal, make it!
         makeMove(nextMove);
     }
     game.cellClicked = cellClicked;
+    function isShow(row, col) {
+        return true;
+        //return state.shownBoard[row][col] == -1;
+    }
+    game.isShow = isShow;
+    function isPlayer0(row, col) {
+        return game.state.shownBoard[row][col] == 0;
+    }
+    game.isPlayer0 = isPlayer0;
+    function isPlayer1(row, col) {
+        return game.state.shownBoard[row][col] == 1;
+    }
+    game.isPlayer1 = isPlayer1;
     function shouldShowImage(row, col) {
-        return game.state.board[row][col] !== "" || isProposal(row, col);
+        return game.state.shownBoard[row][col] !== -1 || isProposal(row, col);
     }
     game.shouldShowImage = shouldShowImage;
-    function isPiece(row, col, turnIndex, pieceKind) {
-        return game.state.board[row][col] === pieceKind || (isProposal(row, col) && game.currentUpdateUI.turnIndex == turnIndex);
-    }
-    function isPieceX(row, col) {
-        return isPiece(row, col, 0, 'X');
-    }
-    game.isPieceX = isPieceX;
-    function isPieceO(row, col) {
-        return isPiece(row, col, 1, 'O');
-    }
-    game.isPieceO = isPieceO;
     function shouldSlowlyAppear(row, col) {
-        return game.state.delta &&
-            game.state.delta.row === row && game.state.delta.col === col;
+        // log.info("shouldSlowlyAppear", row, col);
+        return (game.state.delta1 && game.state.delta1.row === row && game.state.delta1.col === col) ||
+            (game.state.delta2 && game.state.delta2.row === row && game.state.delta2.col === col);
     }
     game.shouldSlowlyAppear = shouldSlowlyAppear;
+    function shouldSlowlyDisappear(row, col) {
+        log.info("shouldSlowlyDisappear", game.disappear, row, col, ((game.disappear.row1 === row && game.disappear.col1 === col) ||
+            (game.disappear.row2 === row && game.disappear.col2 === col)));
+        var ret = game.neededDisappear &&
+            ((game.disappear.row1 === row && game.disappear.col1 === col) ||
+                (game.disappear.row2 === row && game.disappear.col2 === col)) &&
+            game.clickCount === 0;
+        if (ret === true) {
+            log.info("shouldSlowlyDisappear:", row, col);
+        }
+        return ret;
+        // return true;
+    }
+    game.shouldSlowlyDisappear = shouldSlowlyDisappear;
+    function getColor(row, col) {
+        var idx = game.state.board[row][col];
+        return game.colors[idx];
+    }
+    game.getColor = getColor;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(['$rootScope', '$timeout',
@@ -31989,53 +32061,51 @@ angular.module('myApp', ['gameServices'])
 ;
 var aiService;
 (function (aiService) {
+    aiService.DIFFICULTY = 0.3;
     /** Returns the move that the computer player should do for the given state in move. */
     function findComputerMove(move) {
-        return createComputerMove(move, 
-        // at most 1 second for the AI to choose a move (but might be much quicker)
-        { millisecondsLimit: 1000 });
-    }
-    aiService.findComputerMove = findComputerMove;
-    /**
-     * Returns all the possible moves for the given state and turnIndexBeforeMove.
-     * Returns an empty array if the game is over.
-     */
-    function getPossibleMoves(state, turnIndexBeforeMove) {
-        var possibleMoves = [];
-        for (var i = 0; i < gameLogic.ROWS; i++) {
-            for (var j = 0; j < gameLogic.COLS; j++) {
-                try {
-                    possibleMoves.push(gameLogic.createMove(state, i, j, turnIndexBeforeMove));
-                }
-                catch (e) {
+        if (Math.random() > aiService.DIFFICULTY || move.state === null) {
+            log.info("Random choose 2 grid.");
+            var i1 = 0;
+            var j1 = 0;
+            while (move.state !== null && move.state.shownBoard[i1][j1] !== -1) {
+                i1 = Math.floor(Math.random() * gameLogic.ROWS);
+                j1 = Math.floor(Math.random() * gameLogic.COLS);
+            }
+            var possibleMove = gameLogic.createMove(move.state, i1, j1, move.turnIndex);
+            var i2 = 0;
+            var j2 = 1;
+            while (move.state !== null && (move.state.shownBoard[i2][j2] !== -1 || (i1 === i2 && j1 === j2))) {
+                i2 = Math.floor(Math.random() * gameLogic.ROWS);
+                j2 = Math.floor(Math.random() * gameLogic.COLS);
+            }
+            log.info(i1, j1, i2, j2);
+            possibleMove = gameLogic.createMove(possibleMove.state, i2, j2, move.turnIndex);
+            return possibleMove;
+        }
+        else {
+            log.info("Find a match.");
+            for (var i = 0; i < gameLogic.ROWS; i++) {
+                for (var j = 0; j < gameLogic.COLS; j++) {
+                    if (move.state.shownBoard[i][j] === -1) {
+                        var target = move.state.board[i][j];
+                        var possibleMove = gameLogic.createMove(move.state, i, j, move.turnIndex);
+                        for (var i2 = 0; i2 < gameLogic.ROWS; i2++) {
+                            for (var j2 = 0; j2 < gameLogic.COLS; j2++) {
+                                if (move.state.shownBoard[i2][j2] === -1 && !(i2 === i && j2 === j) &&
+                                    move.state.board[i2][j2] === target) {
+                                    log.info(i, j, i2, j2);
+                                    possibleMove = gameLogic.createMove(possibleMove.state, i2, j2, move.turnIndex);
+                                    return possibleMove;
+                                }
+                            }
+                        }
+                    }
                 }
             }
+            log.info("!!!");
         }
-        return possibleMoves;
     }
-    aiService.getPossibleMoves = getPossibleMoves;
-    /**
-     * Returns the move that the computer player should do for the given state.
-     * alphaBetaLimits is an object that sets a limit on the alpha-beta search,
-     * and it has either a millisecondsLimit or maxDepth field:
-     * millisecondsLimit is a time limit, and maxDepth is a depth limit.
-     */
-    function createComputerMove(move, alphaBetaLimits) {
-        // We use alpha-beta search, where the search states are TicTacToe moves.
-        return alphaBetaService.alphaBetaDecision(move, move.turnIndex, getNextStates, getStateScoreForIndex0, null, alphaBetaLimits);
-    }
-    aiService.createComputerMove = createComputerMove;
-    function getStateScoreForIndex0(move, playerIndex) {
-        var endMatchScores = move.endMatchScores;
-        if (endMatchScores) {
-            return endMatchScores[0] > endMatchScores[1] ? Number.POSITIVE_INFINITY
-                : endMatchScores[0] < endMatchScores[1] ? Number.NEGATIVE_INFINITY
-                    : 0;
-        }
-        return 0;
-    }
-    function getNextStates(move, playerIndex) {
-        return getPossibleMoves(move.state, playerIndex);
-    }
+    aiService.findComputerMove = findComputerMove;
 })(aiService || (aiService = {}));
 //# sourceMappingURL=aiService.js.map
