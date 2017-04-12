@@ -176,6 +176,7 @@ var game;
             setTimeout(function () { gameService.makeMove(move, null); }, 200);
         }
         else {
+            // TODO implement community game later.
         }
     }
     function isFirstMove() {
