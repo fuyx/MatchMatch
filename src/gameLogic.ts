@@ -96,19 +96,19 @@ module gameLogic {
     if (!stateBeforeMove) {
       stateBeforeMove = getInitialState();
     }
-    let board: Board = stateBeforeMove.shownBoard;
-    if (board[row][col] !== -1) {
+    let shownBoard: Board = stateBeforeMove.shownBoard;
+    if (shownBoard[row][col] !== -1) {
       throw new Error("One can only make a move in an empty position!");
     }
-    if (!hasEmptyGrid(board)) {
+    if (!hasEmptyGrid(shownBoard)) {
       throw new Error("Can only make a move if the game is not over!");
     }
-    let boardAfterMove = angular.copy(board);
-    boardAfterMove[row][col] = turnIndexBeforeMove === 0 ? 1 : 0;
-    let scores = computeScores(boardAfterMove);
+    let shownBoardAfterMove = angular.copy(shownBoard);
+    shownBoardAfterMove[row][col] = turnIndexBeforeMove;
+    let scores = computeScores(shownBoardAfterMove);
     let endMatchScores: number[];
     let turnIndex: number;
-    if (!hasEmptyGrid(boardAfterMove)) {
+    if (!hasEmptyGrid(shownBoardAfterMove)) {
       // Game over.
       turnIndex = -1;
       if (scores[0] > scores[1]) {
@@ -125,10 +125,10 @@ module gameLogic {
     }
     let delta: BoardDelta = {row: row, col: col};
 
-    let state: IState = {delta1: delta, delta2: null, shownBoard: boardAfterMove, 
+    let state: IState = {delta1: delta, delta2: null, shownBoard: shownBoardAfterMove, 
       board: stateBeforeMove.board};
     if (stateBeforeMove.delta1 != null && stateBeforeMove.delta2 == null) {
-      state = {delta1: stateBeforeMove.delta1, delta2: delta, shownBoard: boardAfterMove, 
+      state = {delta1: stateBeforeMove.delta1, delta2: delta, shownBoard: shownBoardAfterMove, 
         board: stateBeforeMove.board};
     }
     
