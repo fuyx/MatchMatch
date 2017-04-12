@@ -286,6 +286,17 @@ module game {
     let idx: number = state.board[row][col];
     return colors[idx];
   }
+
+  export function getPos(coord : number): string {
+    if (coord == 0) {
+        return "0";
+    } else if (coord == 1) {
+        return "8pt";
+    } else {
+        return "4pt";
+    }
+  }
+
 }
 
 angular.module('myApp', ['gameServices'])

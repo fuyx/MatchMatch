@@ -38,6 +38,13 @@ body {
   border-bottom: 4pt solid black;
 }
 
+.t {
+  border-top: 4pt solid black;
+}
+.l {
+  border-left: 4pt solid black;
+}
+
 .slowlyAppear {
   animation: slowlyAppear 0.5s linear;
 }
