@@ -176,7 +176,6 @@ var game;
             setTimeout(function () { gameService.makeMove(move, null); }, 200);
         }
         else {
-            // TODO implement community game later.
         }
     }
     function isFirstMove() {
@@ -264,6 +263,18 @@ var game;
         return game.colors[idx];
     }
     game.getColor = getColor;
+    function getPos(coord) {
+        if (coord == 0) {
+            return "0";
+        }
+        else if (coord == 1) {
+            return "8pt";
+        }
+        else {
+            return "4pt";
+        }
+    }
+    game.getPos = getPos;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(['$rootScope', '$timeout',
