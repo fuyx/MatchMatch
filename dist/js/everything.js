@@ -32073,20 +32073,20 @@ angular.module('myApp', ['gameServices'])
 ;
 var aiService;
 (function (aiService) {
-    aiService.DIFFICULTY = 0.3;
+    aiService.DIFFICULTY = 0.5;
     /** Returns the move that the computer player should do for the given state in move. */
     function findComputerMove(move) {
         if (Math.random() > aiService.DIFFICULTY || move.state === null) {
             log.info("Random choose 2 grid.");
-            var i1 = 0;
-            var j1 = 0;
+            var i1 = Math.floor(Math.random() * gameLogic.ROWS);
+            var j1 = Math.floor(Math.random() * gameLogic.COLS);
             while (move.state !== null && move.state.shownBoard[i1][j1] !== -1) {
                 i1 = Math.floor(Math.random() * gameLogic.ROWS);
                 j1 = Math.floor(Math.random() * gameLogic.COLS);
             }
             var possibleMove = gameLogic.createMove(move.state, i1, j1, move.turnIndex);
-            var i2 = 0;
-            var j2 = 1;
+            var i2 = Math.floor(Math.random() * gameLogic.ROWS);
+            var j2 = Math.floor(Math.random() * gameLogic.COLS);
             while (move.state !== null && (move.state.shownBoard[i2][j2] !== -1 || (i1 === i2 && j1 === j2))) {
                 i2 = Math.floor(Math.random() * gameLogic.ROWS);
                 j2 = Math.floor(Math.random() * gameLogic.COLS);
