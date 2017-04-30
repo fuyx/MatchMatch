@@ -7,6 +7,8 @@ type IProposalData = BoardDelta;
 interface IState {
   board: Board; // 1 -> SIZE
   shownBoard: Board; // -1 for hidden places; 0 for player 0; 1 for player 1
+  clickedBoard: Board; // -1 for never clicked; 0 for only player 0 clicked;
+                       // 1 for only player 1 clicked; 2 for both of them clicked
   delta1: BoardDelta;
   delta2: BoardDelta;
 }
@@ -24,9 +26,10 @@ module gameLogic {
   export const SIZE = ROWS * COLS / 2;
 
   /** Returns the initial TicTacToe board, which is a ROWSxCOLS matrix containing ''. */
-  export function getInitialBoards(): [Board, Board] {
+  export function getInitialBoards(): [Board, Board, Board] {
     let board: Board = [];
     let shownBoard: Board = [];
+    let clickedBoard: Board = [];
     let counts: number[] = [];
     for (let i = 0; i < SIZE; i++) {
         counts[i] = 0;
@@ -34,6 +37,7 @@ module gameLogic {
     for (let i = 0; i < ROWS; i++) {
       board[i] = [];
       shownBoard[i] = [];
+      clickedBoard[i] = [];
       for (let j = 0; j < COLS; j++) {
         let n = Math.floor(Math.random() * SIZE);
         while (counts[n] >= 2) {
@@ -42,14 +46,16 @@ module gameLogic {
         counts[n]++;
         board[i][j] = n;
         shownBoard[i][j] = -1;
+        clickedBoard[i][j] = -1;
       }
     }
-    return [board, shownBoard];
+    return [board, shownBoard, clickedBoard];
   }
 
   export function getInitialState(): IState {
     let initBoards = getInitialBoards();
-    return {board: initBoards[0], shownBoard: initBoards[1], delta1: null, delta2: null};
+    return {board: initBoards[0], shownBoard: initBoards[1], clickedBoard: initBoards[2], 
+      delta1: null, delta2: null};
   }
 
   /**
@@ -71,7 +77,7 @@ module gameLogic {
   /**
    * 
    */
-  function computeScores(board: Board): [number, number] {
+  export function computeScores(board: Board): [number, number] {
     // scan the board and compute the socre
     let score0 : number = 0;
     let score1 : number = 0;
@@ -104,7 +110,15 @@ module gameLogic {
       throw new Error("Can only make a move if the game is not over!");
     }
     let shownBoardAfterMove = angular.copy(shownBoard);
+
     shownBoardAfterMove[row][col] = turnIndexBeforeMove;
+    // update clickedBoard
+    if (stateBeforeMove.clickedBoard[row][col] == -1) {
+      stateBeforeMove.clickedBoard[row][col] = turnIndexBeforeMove;
+    } else if (stateBeforeMove.clickedBoard[row][col] != turnIndexBeforeMove) {
+      stateBeforeMove.clickedBoard[row][col] = 2;
+    }
+
     let scores = computeScores(shownBoardAfterMove);
     let endMatchScores: number[];
     let turnIndex: number;
@@ -126,10 +140,10 @@ module gameLogic {
     let delta: BoardDelta = {row: row, col: col};
 
     let state: IState = {delta1: delta, delta2: null, shownBoard: shownBoardAfterMove, 
-      board: stateBeforeMove.board};
+      board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard};
     if (stateBeforeMove.delta1 != null && stateBeforeMove.delta2 == null) {
       state = {delta1: stateBeforeMove.delta1, delta2: delta, shownBoard: shownBoardAfterMove, 
-        board: stateBeforeMove.board};
+        board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard};
     }
     
     log.info("gameLogic.createMove", state);
@@ -153,6 +167,22 @@ module gameLogic {
       }
     }
     return true;
+  }
+
+  export function getPlayerHistoryMove(stateBeforeMove: IState, turnIndexBeforeMove: number): boolean[][] {
+    let historyMove : boolean[][] = [];
+    let clickedBoard = stateBeforeMove.clickedBoard;
+    for (let i = 0; i < ROWS; i++) {
+      historyMove[i] = [];
+      for (let j = 0; j < COLS; j++) {
+        if (clickedBoard[i][j] == 2 || clickedBoard[i][j] == turnIndexBeforeMove) {
+          historyMove[i][j] == true;
+        } else {
+          historyMove[i][j] == false;
+        }
+      }
+    }
+    return historyMove;
   }
   
   export function createInitialMove(): IMove {

@@ -28,9 +28,12 @@ module game {
   export let proposals: number[][] = null;
   export let yourPlayerInfo: IPlayerInfo = null;
   export let colors : string[] = [];
+  export let images : string[] = [];
   export let clickCount = 0;
   export let neededDisappear = false;
   export let disappear: IDisappear = null;
+
+  export let playMode: PlayMode;
 
   export function init($rootScope_: angular.IScope, $timeout_: angular.ITimeoutService) {
     $rootScope = $rootScope_;
@@ -51,6 +54,15 @@ module game {
     colors[5] = "purple";
     colors[6] = "gray";
     colors[7] = "orange";
+
+    images[0] = "cherry";
+    images[1] = "apple";
+    images[2] = "grapes";
+    images[3] = "kiwi";
+    images[4] = "orange";
+    images[5] = "pineapple";
+    images[6] = "strawberry";
+    images[7] = "watermelon";
   }
 
   function registerServiceWorker() {
@@ -125,6 +137,8 @@ module game {
       if (currentUpdateUI && angular.equals(currentUpdateUI, params)) return;
     }
 
+    playMode = params.playMode;
+
     currentUpdateUI = params;
     clearAnimationTimeout();
     state = params.state;
@@ -180,6 +194,7 @@ module game {
   }
 
   function makeMove(move: IMove) {
+
     if (move.state.delta2 == null) {
       log.info("game.makeMove -> expect 2nd click...");
       return;
@@ -190,10 +205,33 @@ module game {
     didMakeMove = true;
     
     if (!proposals) {
+
       setTimeout(()=>{gameService.makeMove(move, null)}, 200);
     } else {
       // TODO implement community game later.
     }
+  }
+
+  function getScores() : [string[], number[]] {
+    let playerName : string[] = [];
+    let scores : number[] = gameLogic.computeScores(state.board);
+    if (isComputer()) {
+      playerName[0] = "My score";
+      playerName[1] = "Computer";
+    } else if (playMode == 'passAndPlay') {
+      playerName[0] = "player1";
+      playerName[1] = "player2";
+    } else if (playMode == '0') {
+      playerName[0] = "My score";
+      playerName[1] = "Opponent score";
+    } else if (playMode == '1') {
+      playerName[1] = "My score";
+      playerName[0] = "Opponent score";
+      let tmp = scores[0];
+      scores[0] = scores[1];
+      scores[1] = scores[0];
+    }
+    return [playerName, scores];
   }
 
   function isFirstMove() {
@@ -226,9 +264,10 @@ module game {
 
   export function cellClicked(row: number, col: number): void {
     log.info("Clicked on cell:", row, col);
-    if (clickCount > 2) {
+    if (clickCount >= 2 || isFlipped(row, col)) {
       return;
     }
+
     if (!isHumanTurn()) return;
     let nextMove: IMove = null;
     try {
@@ -240,8 +279,14 @@ module game {
       return;
     }
     clickCount++;
+    log.info("cellClicked - state.shownBoard", state.shownBoard);
     // Move is legal, make it!
     makeMove(nextMove);
+  }
+
+  export function isFlipped(row: number, col: number) : boolean {
+    log.info("isFlipped", row, col, state.shownBoard[row][col] != -1);
+    return state.shownBoard[row][col] != -1;
   }
 
   export function isShow(row: number, col: number): boolean {
@@ -285,6 +330,12 @@ module game {
   export function getColor(row : number, col : number): string {
     let idx: number = state.board[row][col];
     return colors[idx];
+  }
+
+  export function getImage(row : number, col : number): string {
+    let idx: number = state.board[row][col];
+    log.info(images[idx]);
+    return images[idx];
   }
 
   export function getPos(coord : number): string {

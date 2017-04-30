@@ -15,6 +15,7 @@ var game;
     game.proposals = null;
     game.yourPlayerInfo = null;
     game.colors = [];
+    game.images = [];
     game.clickCount = 0;
     game.neededDisappear = false;
     game.disappear = null;
@@ -37,6 +38,14 @@ var game;
         game.colors[5] = "purple";
         game.colors[6] = "gray";
         game.colors[7] = "orange";
+        game.images[0] = "cherry";
+        game.images[1] = "apple";
+        game.images[2] = "grapes";
+        game.images[3] = "kiwi";
+        game.images[4] = "orange";
+        game.images[5] = "pineapple";
+        game.images[6] = "strawberry";
+        game.images[7] = "watermelon";
     }
     game.init = init;
     function registerServiceWorker() {
@@ -109,6 +118,7 @@ var game;
             if (game.currentUpdateUI && angular.equals(game.currentUpdateUI, params))
                 return;
         }
+        game.playMode = params.playMode;
         game.currentUpdateUI = params;
         clearAnimationTimeout();
         game.state = params.state;
@@ -176,8 +186,31 @@ var game;
             setTimeout(function () { gameService.makeMove(move, null); }, 200);
         }
         else {
-            // TODO implement community game later.
         }
+    }
+    function getScores() {
+        var playerName = [];
+        var scores = gameLogic.computeScores(game.state.board);
+        if (isComputer()) {
+            playerName[0] = "My score";
+            playerName[1] = "Computer";
+        }
+        else if (game.playMode == 'passAndPlay') {
+            playerName[0] = "player1";
+            playerName[1] = "player2";
+        }
+        else if (game.playMode == '0') {
+            playerName[0] = "My score";
+            playerName[1] = "Opponent score";
+        }
+        else if (game.playMode == '1') {
+            playerName[1] = "My score";
+            playerName[0] = "Opponent score";
+            var tmp = scores[0];
+            scores[0] = scores[1];
+            scores[1] = scores[0];
+        }
+        return [playerName, scores];
     }
     function isFirstMove() {
         return !game.currentUpdateUI.state;
@@ -203,7 +236,7 @@ var game;
     }
     function cellClicked(row, col) {
         log.info("Clicked on cell:", row, col);
-        if (game.clickCount > 2) {
+        if (game.clickCount >= 2 || isFlipped(row, col)) {
             return;
         }
         if (!isHumanTurn())
@@ -218,10 +251,16 @@ var game;
             return;
         }
         game.clickCount++;
+        log.info("cellClicked - state.shownBoard", game.state.shownBoard);
         // Move is legal, make it!
         makeMove(nextMove);
     }
     game.cellClicked = cellClicked;
+    function isFlipped(row, col) {
+        log.info("isFlipped", row, col, game.state.shownBoard[row][col] != -1);
+        return game.state.shownBoard[row][col] != -1;
+    }
+    game.isFlipped = isFlipped;
     function isShow(row, col) {
         return true;
         //return state.shownBoard[row][col] == -1;
@@ -264,6 +303,12 @@ var game;
         return game.colors[idx];
     }
     game.getColor = getColor;
+    function getImage(row, col) {
+        var idx = game.state.board[row][col];
+        log.info(game.images[idx]);
+        return game.images[idx];
+    }
+    game.getImage = getImage;
     function getPos(coord) {
         if (coord == 0) {
             return "0";

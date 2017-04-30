@@ -31,6 +31,39 @@ body {
   background-color: rgb(250,250,250);
 }
 
+
+.container {
+  width: 165px;
+  height: 200px;
+  position: relative;
+  perspective: 800px;
+}
+
+.card {
+  width: 100%;
+  height: 100%;
+  transition: transform 1s;
+  transform-style: preserve-3d;
+}
+
+.card.flipped {
+  transform: rotateY( 180deg );
+}
+
+.card img {
+  display: block;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  backface-visibility: hidden;
+}
+
+.card .back {
+  background: blue;
+  transform: rotateY( 180deg );
+}
+
+
 .r {
   border-right: 4pt solid black;
 }
