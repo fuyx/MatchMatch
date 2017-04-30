@@ -59,7 +59,7 @@ body {
 }
 
 .card .back {
-  background: blue;
+  background: white;
   transform: rotateY( 180deg );
 }
 

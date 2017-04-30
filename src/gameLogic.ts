@@ -77,19 +77,34 @@ module gameLogic {
   /**
    * 
    */
-  export function computeScores(board: Board): [number, number] {
+  export function computeScores(board: Board, shownBoard: Board): [number, number] {
     // scan the board and compute the socre
     let score0 : number = 0;
     let score1 : number = 0;
+    let player1Counts: number[] = [];
+    let player2Counts: number[] = [];
+    for (let i = 0; i < SIZE; i++) {
+      player1Counts[i] = 0;
+      player2Counts[i] = 0;
+    }
     for (let i = 0; i < ROWS; i++) {
         for (let j = 0; j < COLS; j++) {
-            if (board[i][j] == 0) {
-                score0++;
-            } else if (board[i][j] == 1) {
-                score1++;
+            if (shownBoard[i][j] == 0) {
+                player1Counts[board[i][j]]++;
+            } else if (shownBoard[i][j] == 1) {
+                player2Counts[board[i][j]]++;
             }
         }
     }
+    for (let i = 0; i < SIZE; i++) {
+      if(player1Counts[i] == 2) {
+        score0++;
+      }
+      if(player2Counts[i] == 2) {
+        score1++;
+      }
+    }
+    log.info("computeScores ", score0, score1);
     return [score0, score1];
   }
 
@@ -119,7 +134,7 @@ module gameLogic {
       stateBeforeMove.clickedBoard[row][col] = 2;
     }
 
-    let scores = computeScores(shownBoardAfterMove);
+    let scores = computeScores(stateBeforeMove.board, shownBoardAfterMove);
     let endMatchScores: number[];
     let turnIndex: number;
     if (!hasEmptyGrid(shownBoardAfterMove)) {

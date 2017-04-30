@@ -24,6 +24,10 @@
 </head>
 <body ng-cloak>
 <div id="gameArea">
+  <div>
+    {{game.getScores()[0][0]}}: {{game.getScores()[1][0]}}
+    {{game.getScores()[0][1]}}: {{game.getScores()[1][1]}}
+  </div>
   <table>
   <tr ng-repeat="row in [0, 1, 2, 3]">
     <td ng-repeat="col in [0, 1, 2, 3]" ng-click="game.cellClicked(row, col)">

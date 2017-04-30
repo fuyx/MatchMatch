@@ -60,20 +60,35 @@ var gameLogic;
     /**
      *
      */
-    function computeScores(board) {
+    function computeScores(board, shownBoard) {
         // scan the board and compute the socre
         var score0 = 0;
         var score1 = 0;
+        var player1Counts = [];
+        var player2Counts = [];
+        for (var i = 0; i < gameLogic.SIZE; i++) {
+            player1Counts[i] = 0;
+            player2Counts[i] = 0;
+        }
         for (var i = 0; i < gameLogic.ROWS; i++) {
             for (var j = 0; j < gameLogic.COLS; j++) {
-                if (board[i][j] == 0) {
-                    score0++;
+                if (shownBoard[i][j] == 0) {
+                    player1Counts[board[i][j]]++;
                 }
-                else if (board[i][j] == 1) {
-                    score1++;
+                else if (shownBoard[i][j] == 1) {
+                    player2Counts[board[i][j]]++;
                 }
             }
         }
+        for (var i = 0; i < gameLogic.SIZE; i++) {
+            if (player1Counts[i] == 2) {
+                score0++;
+            }
+            if (player2Counts[i] == 2) {
+                score1++;
+            }
+        }
+        log.info("computeScores ", score0, score1);
         return [score0, score1];
     }
     gameLogic.computeScores = computeScores;
@@ -101,7 +116,7 @@ var gameLogic;
         else if (stateBeforeMove.clickedBoard[row][col] != turnIndexBeforeMove) {
             stateBeforeMove.clickedBoard[row][col] = 2;
         }
-        var scores = computeScores(shownBoardAfterMove);
+        var scores = computeScores(stateBeforeMove.board, shownBoardAfterMove);
         var endMatchScores;
         var turnIndex;
         if (!hasEmptyGrid(shownBoardAfterMove)) {

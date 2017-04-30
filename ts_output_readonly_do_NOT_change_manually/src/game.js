@@ -190,8 +190,8 @@ var game;
     }
     function getScores() {
         var playerName = [];
-        var scores = gameLogic.computeScores(game.state.board);
-        if (isComputer()) {
+        var scores = gameLogic.computeScores(game.state.board, game.state.shownBoard);
+        if (game.playMode == 'playAgainstTheComputer') {
             playerName[0] = "My score";
             playerName[1] = "Computer";
         }
@@ -210,8 +210,10 @@ var game;
             scores[0] = scores[1];
             scores[1] = scores[0];
         }
+        log.info("getScores: ", playerName, scores);
         return [playerName, scores];
     }
+    game.getScores = getScores;
     function isFirstMove() {
         return !game.currentUpdateUI.state;
     }

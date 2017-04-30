@@ -212,10 +212,10 @@ module game {
     }
   }
 
-  function getScores() : [string[], number[]] {
+  export function getScores() : [string[], number[]] {
     let playerName : string[] = [];
-    let scores : number[] = gameLogic.computeScores(state.board);
-    if (isComputer()) {
+    let scores : number[] = gameLogic.computeScores(state.board, state.shownBoard);
+    if (playMode == 'playAgainstTheComputer') {
       playerName[0] = "My score";
       playerName[1] = "Computer";
     } else if (playMode == 'passAndPlay') {
@@ -231,6 +231,7 @@ module game {
       scores[0] = scores[1];
       scores[1] = scores[0];
     }
+    log.info("getScores: ",playerName, scores);
     return [playerName, scores];
   }
 
