@@ -46,8 +46,28 @@ var game;
         game.images[5] = "pineapple";
         game.images[6] = "strawberry";
         game.images[7] = "watermelon";
+        game.images[8] = "bananas";
+        game.images[9] = "mango";
     }
     game.init = init;
+    function setBoardRows(rows) {
+        gameLogic.rows = rows;
+        gameLogic.resizeBoard();
+    }
+    game.setBoardRows = setBoardRows;
+    function getBoardRows() {
+        return gameLogic.rows;
+    }
+    game.getBoardRows = getBoardRows;
+    function setBardCols(cols) {
+        gameLogic.cols = cols;
+        gameLogic.resizeBoard();
+    }
+    game.setBardCols = setBardCols;
+    function getBoardCols() {
+        return gameLogic.cols;
+    }
+    game.getBoardCols = getBoardCols;
     function registerServiceWorker() {
         // I prefer to use appCache over serviceWorker
         // (because iOS doesn't support serviceWorker, so we have to use appCache)
@@ -88,9 +108,9 @@ var game;
     game.getCellStyle = getCellStyle;
     function getProposalsBoard(playerIdToProposal) {
         var proposals = [];
-        for (var i = 0; i < gameLogic.ROWS; i++) {
+        for (var i = 0; i < gameLogic.rows; i++) {
             proposals[i] = [];
-            for (var j = 0; j < gameLogic.COLS; j++) {
+            for (var j = 0; j < gameLogic.cols; j++) {
                 proposals[i][j] = 0;
             }
         }
@@ -183,7 +203,7 @@ var game;
         }
         game.didMakeMove = true;
         if (!game.proposals) {
-            setTimeout(function () { gameService.makeMove(move, null); }, 200);
+            setTimeout(function () { gameService.makeMove(move, null); }, 1000);
         }
         else {
         }
@@ -196,8 +216,8 @@ var game;
             playerName[1] = "Computer";
         }
         else if (game.playMode == 'passAndPlay') {
-            playerName[0] = "player1";
-            playerName[1] = "player2";
+            playerName[0] = "Player1";
+            playerName[1] = "Player2";
         }
         else if (game.playMode == '0') {
             playerName[0] = "My score";

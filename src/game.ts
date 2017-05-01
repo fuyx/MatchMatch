@@ -63,6 +63,26 @@ module game {
     images[5] = "pineapple";
     images[6] = "strawberry";
     images[7] = "watermelon";
+    images[8] = "bananas";
+    images[9] = "mango";
+  }
+
+  export function setBoardRows(rows: number) {
+    gameLogic.rows = rows;
+    gameLogic.resizeBoard();
+  }
+
+  export function getBoardRows() : number {
+    return gameLogic.rows;
+  }
+
+  export function setBardCols(cols: number) {
+    gameLogic.cols = cols;
+    gameLogic.resizeBoard();
+  }
+
+  export function getBoardCols() : number {
+    return gameLogic.cols;
   }
 
   function registerServiceWorker() {
@@ -106,9 +126,9 @@ module game {
   
   function getProposalsBoard(playerIdToProposal: IProposals): number[][] {
     let proposals: number[][] = [];
-    for (let i = 0; i < gameLogic.ROWS; i++) {
+    for (let i = 0; i < gameLogic.rows; i++) {
       proposals[i] = [];
-      for (let j = 0; j < gameLogic.COLS; j++) {
+      for (let j = 0; j < gameLogic.cols; j++) {
         proposals[i][j] = 0;
       }
     }
@@ -206,7 +226,7 @@ module game {
     
     if (!proposals) {
 
-      setTimeout(()=>{gameService.makeMove(move, null)}, 200);
+      setTimeout(()=>{gameService.makeMove(move, null)}, 1000);
     } else {
       // TODO implement community game later.
     }
@@ -219,8 +239,8 @@ module game {
       playerName[0] = "My score";
       playerName[1] = "Computer";
     } else if (playMode == 'passAndPlay') {
-      playerName[0] = "player1";
-      playerName[1] = "player2";
+      playerName[0] = "Player1";
+      playerName[1] = "Player2";
     } else if (playMode == '0') {
       playerName[0] = "My score";
       playerName[1] = "Opponent score";

@@ -6,26 +6,26 @@ var log = gamingPlatform.log;
 var dragAndDropService = gamingPlatform.dragAndDropService;
 var gameLogic;
 (function (gameLogic) {
-    gameLogic.ROWS = 4;
-    gameLogic.COLS = 4;
-    gameLogic.SIZE = gameLogic.ROWS * gameLogic.COLS / 2;
+    gameLogic.rows = 4;
+    gameLogic.cols = 4;
+    gameLogic.size = gameLogic.rows * gameLogic.cols / 2;
     /** Returns the initial TicTacToe board, which is a ROWSxCOLS matrix containing ''. */
     function getInitialBoards() {
         var board = [];
         var shownBoard = [];
         var clickedBoard = [];
         var counts = [];
-        for (var i = 0; i < gameLogic.SIZE; i++) {
+        for (var i = 0; i < gameLogic.size; i++) {
             counts[i] = 0;
         }
-        for (var i = 0; i < gameLogic.ROWS; i++) {
+        for (var i = 0; i < gameLogic.rows; i++) {
             board[i] = [];
             shownBoard[i] = [];
             clickedBoard[i] = [];
-            for (var j = 0; j < gameLogic.COLS; j++) {
-                var n = Math.floor(Math.random() * gameLogic.SIZE);
+            for (var j = 0; j < gameLogic.cols; j++) {
+                var n = Math.floor(Math.random() * gameLogic.size);
                 while (counts[n] >= 2) {
-                    n = Math.floor(Math.random() * gameLogic.SIZE);
+                    n = Math.floor(Math.random() * gameLogic.size);
                 }
                 counts[n]++;
                 board[i][j] = n;
@@ -46,8 +46,8 @@ var gameLogic;
      *
      */
     function hasEmptyGrid(board) {
-        for (var i = 0; i < gameLogic.ROWS; i++) {
-            for (var j = 0; j < gameLogic.COLS; j++) {
+        for (var i = 0; i < gameLogic.rows; i++) {
+            for (var j = 0; j < gameLogic.cols; j++) {
                 if (board[i][j] === -1) {
                     // If there is an empty cell then we do not have a tie.
                     return true;
@@ -66,12 +66,12 @@ var gameLogic;
         var score1 = 0;
         var player1Counts = [];
         var player2Counts = [];
-        for (var i = 0; i < gameLogic.SIZE; i++) {
+        for (var i = 0; i < gameLogic.size; i++) {
             player1Counts[i] = 0;
             player2Counts[i] = 0;
         }
-        for (var i = 0; i < gameLogic.ROWS; i++) {
-            for (var j = 0; j < gameLogic.COLS; j++) {
+        for (var i = 0; i < gameLogic.rows; i++) {
+            for (var j = 0; j < gameLogic.cols; j++) {
                 if (shownBoard[i][j] == 0) {
                     player1Counts[board[i][j]]++;
                 }
@@ -80,7 +80,7 @@ var gameLogic;
                 }
             }
         }
-        for (var i = 0; i < gameLogic.SIZE; i++) {
+        for (var i = 0; i < gameLogic.size; i++) {
             if (player1Counts[i] == 2) {
                 score0++;
             }
@@ -169,9 +169,9 @@ var gameLogic;
     function getPlayerHistoryMove(stateBeforeMove, turnIndexBeforeMove) {
         var historyMove = [];
         var clickedBoard = stateBeforeMove.clickedBoard;
-        for (var i = 0; i < gameLogic.ROWS; i++) {
+        for (var i = 0; i < gameLogic.rows; i++) {
             historyMove[i] = [];
-            for (var j = 0; j < gameLogic.COLS; j++) {
+            for (var j = 0; j < gameLogic.cols; j++) {
                 if (clickedBoard[i][j] == 2 || clickedBoard[i][j] == turnIndexBeforeMove) {
                     historyMove[i][j] == true;
                 }
@@ -183,6 +183,10 @@ var gameLogic;
         return historyMove;
     }
     gameLogic.getPlayerHistoryMove = getPlayerHistoryMove;
+    function resizeBoard() {
+        gameLogic.size = gameLogic.rows * gameLogic.cols / 2;
+    }
+    gameLogic.resizeBoard = resizeBoard;
     function createInitialMove() {
         return { endMatchScores: null, turnIndex: 0,
             state: getInitialState() };
