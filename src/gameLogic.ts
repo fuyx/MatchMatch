@@ -21,9 +21,9 @@ import log = gamingPlatform.log;
 import dragAndDropService = gamingPlatform.dragAndDropService;
 
 module gameLogic {
-  export const ROWS = 4;
-  export const COLS = 4;
-  export const SIZE = ROWS * COLS / 2;
+  export let rows = 4;
+  export let cols = 4;
+  export let size = rows * cols / 2;
 
   /** Returns the initial TicTacToe board, which is a ROWSxCOLS matrix containing ''. */
   export function getInitialBoards(): [Board, Board, Board] {
@@ -31,17 +31,17 @@ module gameLogic {
     let shownBoard: Board = [];
     let clickedBoard: Board = [];
     let counts: number[] = [];
-    for (let i = 0; i < SIZE; i++) {
+    for (let i = 0; i < size; i++) {
         counts[i] = 0;
     }
-    for (let i = 0; i < ROWS; i++) {
+    for (let i = 0; i < rows; i++) {
       board[i] = [];
       shownBoard[i] = [];
       clickedBoard[i] = [];
-      for (let j = 0; j < COLS; j++) {
-        let n = Math.floor(Math.random() * SIZE);
+      for (let j = 0; j < cols; j++) {
+        let n = Math.floor(Math.random() * size);
         while (counts[n] >= 2) {
-          n = Math.floor(Math.random() * SIZE);
+          n = Math.floor(Math.random() * size);
         }
         counts[n]++;
         board[i][j] = n;
@@ -62,8 +62,8 @@ module gameLogic {
    * 
    */
   function hasEmptyGrid(board: Board): boolean {
-    for (let i = 0; i < ROWS; i++) {
-      for (let j = 0; j < COLS; j++) {
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
         if (board[i][j] === -1) {
           // If there is an empty cell then we do not have a tie.
           return true;
@@ -83,12 +83,12 @@ module gameLogic {
     let score1 : number = 0;
     let player1Counts: number[] = [];
     let player2Counts: number[] = [];
-    for (let i = 0; i < SIZE; i++) {
+    for (let i = 0; i < size; i++) {
       player1Counts[i] = 0;
       player2Counts[i] = 0;
     }
-    for (let i = 0; i < ROWS; i++) {
-        for (let j = 0; j < COLS; j++) {
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
             if (shownBoard[i][j] == 0) {
                 player1Counts[board[i][j]]++;
             } else if (shownBoard[i][j] == 1) {
@@ -96,7 +96,7 @@ module gameLogic {
             }
         }
     }
-    for (let i = 0; i < SIZE; i++) {
+    for (let i = 0; i < size; i++) {
       if(player1Counts[i] == 2) {
         score0++;
       }
@@ -187,9 +187,9 @@ module gameLogic {
   export function getPlayerHistoryMove(stateBeforeMove: IState, turnIndexBeforeMove: number): boolean[][] {
     let historyMove : boolean[][] = [];
     let clickedBoard = stateBeforeMove.clickedBoard;
-    for (let i = 0; i < ROWS; i++) {
+    for (let i = 0; i < rows; i++) {
       historyMove[i] = [];
-      for (let j = 0; j < COLS; j++) {
+      for (let j = 0; j < cols; j++) {
         if (clickedBoard[i][j] == 2 || clickedBoard[i][j] == turnIndexBeforeMove) {
           historyMove[i][j] == true;
         } else {
@@ -198,6 +198,10 @@ module gameLogic {
       }
     }
     return historyMove;
+  }
+
+  export function resizeBoard() {
+    size = rows * cols / 2;
   }
   
   export function createInitialMove(): IMove {
