@@ -12,7 +12,8 @@
   <!-- To ensure CSS files are downloaded in parallel, always include external CSS before external JavaScript. -->
   <!-- build:[href] css/everything.min.css -->
   <link rel="stylesheet" type="text/css" href="css/game.css">
-  <!-- /build -->
+	<link href="https://fonts.googleapis.com/css?family=Love+Ya+Like+A+Sister" rel="stylesheet">
+	<!-- /build -->
 
   <!-- build:js js/everything.min.js -->
   <script src="lib/angular.js"></script>
@@ -24,15 +25,27 @@
 </head>
 <body ng-cloak>
 <div id="gameArea">
-  <div class="status">
+  <div class="status" ng-if="game.getStatus() != 0">
     {{game.getScores()[0][0]}}: {{game.getScores()[1][0]}}
     {{game.getScores()[0][1]}}: {{game.getScores()[1][1]}}
   </div>
-  <div class="board">  
-	<div ng-repeat="row in [0, 1, 2, 3]"
-			 style="position:absolute; top:{{row * 25}}%; left:0; width:100%; height:25%;">
-    <div ng-repeat="col in [0, 1, 2, 3]"
-				 style="position:absolute; top:0; left:{{col * 25}}%; width:25%; height:100%;">
+	<div class="board" ng-if="game.getStatus() == 0">
+		<div ng-if="!game.isMyTurn()">
+			<p class="wait">Please choose game size:</p>
+			<div class="sizebtn" ng-click="">3 X 4</div>
+			<div class="sizebtn" ng-click="">4 X 4</div>
+			<div class="sizebtn" ng-click="">4 X 5</div>
+		</div>
+		<div ng-if="game.isMyTurn()">
+			<p class="wait">Your opponent is choosing game size. Waiting...</p>
+			<div class="loader"></div>
+		</div>
+	</div>
+  <div class="board" ng-if="game.getStatus() == 1">  
+		<div ng-repeat="row in game.getRowArray()"
+			style="position:absolute; top:{{row * game.getHeight()}}%; left:0; width:100%; height:{{game.getHeight()}}%;">
+			<div ng-repeat="col in game.getColArray()"
+				 style="position:absolute; top:0; left:{{col * game.getWidth()}}%; width:{{game.getWidth()}}%; height:100%;">
       
         <div class="container" ng-click="game.cellClicked(row, col)"
 					ng-style="game.getCellStyle(row, col)">
@@ -40,9 +53,11 @@
               <img class="front" ng-src="img/back.png">
               <img class="back" ng-src="img/{{game.getImage(row, col)}}.png">
           </div>
-      </div>
-  </div>
-  </div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="board" ng-if="game.getStatus() == 2">
 	</div>
 </div>
 

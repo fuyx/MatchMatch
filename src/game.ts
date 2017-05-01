@@ -349,6 +349,37 @@ module game {
     }
   }
 
+  export function getStatus(): number {
+    //TODO
+    return 1;
+  }
+
+  export function getRow(): number {
+    //TODO
+    return 4;
+  }
+
+  export function getCol(): number {
+    //TODO
+    return 4;
+  }
+
+  export function getHeight(): number {
+    return 100.0 / getRow();
+  }
+
+  export function getWidth(): number {
+    return 100.0 / getCol();
+  }
+
+  export function getRowArray(): number[] {
+    return Array.apply(null, {length: getRow()}).map(Number.call, Number)
+  }
+
+  export function getColArray(): number[] {
+    return Array.apply(null, {length: getCol()}).map(Number.call, Number)
+  }
+
 }
 
 angular.module('myApp', ['gameServices'])

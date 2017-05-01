@@ -5,6 +5,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   position: fixed!important;
+  font-family: 'Love Ya Like A Sister', cursive;
 }
 /* To prevent long-press that will bring up copy-paste dialog. */
 * {
@@ -76,6 +77,43 @@ body {
   transform: rotateY( 180deg );
 }
 
+/*loader*/
+.loader {
+  border: 1em solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 1em solid #3498db;
+  width: 2em;
+  height: 2em;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+  margin: auto;
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.wait {
+  text-align: center;
+  font-size: 2em;
+}
+
+.sizebtn {
+  font-size: 3em;
+  text-align: center;
+  margin-left: 20%;
+  margin-right: 20%;
+}
+
+.sizebtn:hover {
+  background-color: #f3f3f3;
+}
 
 .r {
   border-right: 4pt solid black;

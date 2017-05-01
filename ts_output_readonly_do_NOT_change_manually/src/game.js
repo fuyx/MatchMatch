@@ -186,6 +186,7 @@ var game;
             setTimeout(function () { gameService.makeMove(move, null); }, 200);
         }
         else {
+            // TODO implement community game later.
         }
     }
     function getScores() {
@@ -323,6 +324,37 @@ var game;
         }
     }
     game.getPos = getPos;
+    function getStatus() {
+        //TODO
+        return 1;
+    }
+    game.getStatus = getStatus;
+    function getRow() {
+        //TODO
+        return 4;
+    }
+    game.getRow = getRow;
+    function getCol() {
+        //TODO
+        return 4;
+    }
+    game.getCol = getCol;
+    function getHeight() {
+        return 100.0 / getRow();
+    }
+    game.getHeight = getHeight;
+    function getWidth() {
+        return 100.0 / getCol();
+    }
+    game.getWidth = getWidth;
+    function getRowArray() {
+        return Array.apply(null, { length: getRow() }).map(Number.call, Number);
+    }
+    game.getRowArray = getRowArray;
+    function getColArray() {
+        return Array.apply(null, { length: getCol() }).map(Number.call, Number);
+    }
+    game.getColArray = getColArray;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(['$rootScope', '$timeout',
