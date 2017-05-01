@@ -31,12 +31,25 @@ body {
   background-color: rgb(250,250,250);
 }
 
+.board {
+  position:absolute;
+  top:10%;
+  height:90%;
+  width:90%;
+  margin-left:5%;
+  margin-right:5%;
+}
+
+.status {
+  position:absolute;
+  top:0%;
+}
 
 .container {
-  width: 165px;
-  height: 200px;
+  width: 100%;
+  height: 100%;
   position: relative;
-  perspective: 800px;
+  /*perspective: 800px;*/
 }
 
 .card {
