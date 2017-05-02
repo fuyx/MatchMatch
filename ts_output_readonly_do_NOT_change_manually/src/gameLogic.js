@@ -8,9 +8,14 @@ var gameLogic;
 (function (gameLogic) {
     gameLogic.rows = 4;
     gameLogic.cols = 4;
-    gameLogic.size = gameLogic.rows * gameLogic.cols / 2;
+    gameLogic.size = 8;
+    gameLogic.status = 0;
     /** Returns the initial TicTacToe board, which is a ROWSxCOLS matrix containing ''. */
-    function getInitialBoards() {
+    function getInitialBoards(rows, cols) {
+        rows = rows;
+        cols = cols;
+        gameLogic.size = rows * cols / 2;
+        log.info("getInitialBoards", rows, cols, gameLogic.size);
         var board = [];
         var shownBoard = [];
         var clickedBoard = [];
@@ -18,11 +23,11 @@ var gameLogic;
         for (var i = 0; i < gameLogic.size; i++) {
             counts[i] = 0;
         }
-        for (var i = 0; i < gameLogic.rows; i++) {
+        for (var i = 0; i < rows; i++) {
             board[i] = [];
             shownBoard[i] = [];
             clickedBoard[i] = [];
-            for (var j = 0; j < gameLogic.cols; j++) {
+            for (var j = 0; j < cols; j++) {
                 var n = Math.floor(Math.random() * gameLogic.size);
                 while (counts[n] >= 2) {
                     n = Math.floor(Math.random() * gameLogic.size);
@@ -36,10 +41,10 @@ var gameLogic;
         return [board, shownBoard, clickedBoard];
     }
     gameLogic.getInitialBoards = getInitialBoards;
-    function getInitialState() {
-        var initBoards = getInitialBoards();
+    function getInitialState(rows, cols) {
+        var initBoards = getInitialBoards(rows, cols);
         return { board: initBoards[0], shownBoard: initBoards[1], clickedBoard: initBoards[2],
-            delta1: null, delta2: null };
+            delta1: null, delta2: null, status: 0 };
     }
     gameLogic.getInitialState = getInitialState;
     /**
@@ -88,18 +93,29 @@ var gameLogic;
                 score1++;
             }
         }
-        log.info("computeScores ", score0, score1);
         return [score0, score1];
     }
     gameLogic.computeScores = computeScores;
+    function chooseSize(rows, cols, turnIndex) {
+        rows = rows;
+        cols = cols;
+        var state = getInitialState(rows, cols);
+        var move = {
+            endMatchScores: null,
+            turnIndex: turnIndex,
+            state: state
+        };
+        log.info("chooseSize", move);
+        return move;
+    }
+    gameLogic.chooseSize = chooseSize;
     /**
      * Returns the move that should be performed when player
      * with index turnIndexBeforeMove makes a move in cell row X col.
      */
     function createMove(stateBeforeMove, row, col, turnIndexBeforeMove) {
-        if (!stateBeforeMove) {
-            stateBeforeMove = getInitialState();
-        }
+        gameLogic.rows = stateBeforeMove.board.length;
+        gameLogic.cols = stateBeforeMove.board[0].length;
         var shownBoard = stateBeforeMove.shownBoard;
         if (shownBoard[row][col] !== -1) {
             throw new Error("One can only make a move in an empty position!");
@@ -139,10 +155,10 @@ var gameLogic;
         }
         var delta = { row: row, col: col };
         var state = { delta1: delta, delta2: null, shownBoard: shownBoardAfterMove,
-            board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard };
+            board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard, status: 1 };
         if (stateBeforeMove.delta1 != null && stateBeforeMove.delta2 == null) {
             state = { delta1: stateBeforeMove.delta1, delta2: delta, shownBoard: shownBoardAfterMove,
-                board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard };
+                board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard, status: 1 };
         }
         log.info("gameLogic.createMove", state);
         return {
@@ -183,13 +199,9 @@ var gameLogic;
         return historyMove;
     }
     gameLogic.getPlayerHistoryMove = getPlayerHistoryMove;
-    function resizeBoard() {
-        gameLogic.size = gameLogic.rows * gameLogic.cols / 2;
-    }
-    gameLogic.resizeBoard = resizeBoard;
-    function createInitialMove() {
+    function createInitialMove(rows, cols) {
         return { endMatchScores: null, turnIndex: 0,
-            state: getInitialState() };
+            state: getInitialState(rows, cols) };
     }
     gameLogic.createInitialMove = createInitialMove;
     function forSimpleTestHtml() {

@@ -67,24 +67,6 @@ module game {
     images[9] = "mango";
   }
 
-  export function setBoardRows(rows: number) {
-    gameLogic.rows = rows;
-    gameLogic.resizeBoard();
-  }
-
-  export function getBoardRows() : number {
-    return gameLogic.rows;
-  }
-
-  export function setBardCols(cols: number) {
-    gameLogic.cols = cols;
-    gameLogic.resizeBoard();
-  }
-
-  export function getBoardCols() : number {
-    return gameLogic.cols;
-  }
-
   function registerServiceWorker() {
     // I prefer to use appCache over serviceWorker
     // (because iOS doesn't support serviceWorker, so we have to use appCache)
@@ -158,12 +140,16 @@ module game {
     }
 
     playMode = params.playMode;
-
     currentUpdateUI = params;
     clearAnimationTimeout();
     state = params.state;
+
+    if(state != null) {
+      gameLogic.rows = state.board.length;
+      gameLogic.cols = state.board[0].length;
+    }
     if (isFirstMove()) {
-      state = gameLogic.getInitialState();
+      
     } else {
       if (params.playMode === 'passAndPlay'){
         if(!gameLogic.checkMatch(state)) {
@@ -180,6 +166,9 @@ module game {
         }}, 50);
       }
     }
+    if(params.state != null) {
+      gameLogic.status = params.state.status;
+    }
 
     log.info(game)  
 
@@ -187,6 +176,16 @@ module game {
     // because if we call aiService now
     // then the animation will be paused until the javascript finishes.
     animationEndedTimeout = $timeout(animationEndedCallback, 500);
+  }
+
+  export function showChoosePanel() {
+    if (playMode == 'passAndPlay') {
+      return true;
+    } else if (playMode == 'playAgainstTheComputer') {
+      return true;
+    } else {
+      return isMyTurn();
+    }
   }
 
   function animationEndedCallback() {
@@ -213,20 +212,34 @@ module game {
     makeMove(move);
   }
 
-  function makeMove(move: IMove) {
+  export function chooseSize(rows: number, cols: number) {
+    log.info("chooseSize", rows, cols);
+    let move = gameLogic.chooseSize(rows, cols, currentUpdateUI.turnIndex);
+    makeMove(move);
+  }
 
-    if (move.state.delta2 == null) {
-      log.info("game.makeMove -> expect 2nd click...");
-      return;
-    }
-    if (didMakeMove) { // Only one move per updateUI
-      return;
+  function makeMove(move: IMove) {
+    let needDelay = true;
+    if (move.state.status == 0) {
+      move.state.status = 1;
+      needDelay = false;
+    } else {
+      if (move.state.delta2 == null) {
+        log.info("game.makeMove -> expect 2nd click...");
+        return;
+      }
+      if (didMakeMove) { // Only one move per updateUI
+        return;
+      }
     }
     didMakeMove = true;
     
     if (!proposals) {
-
-      setTimeout(()=>{gameService.makeMove(move, null)}, 1000);
+      if(needDelay) {
+        setTimeout(()=>{gameService.makeMove(move, null)}, 1000);
+      } else {
+        gameService.makeMove(move, null)
+      }
     } else {
       // TODO implement community game later.
     }
@@ -251,7 +264,6 @@ module game {
       scores[0] = scores[1];
       scores[1] = scores[0];
     }
-    log.info("getScores: ",playerName, scores);
     return [playerName, scores];
   }
 
@@ -283,6 +295,11 @@ module game {
       currentUpdateUI.yourPlayerIndex === currentUpdateUI.turnIndex; // it's my turn
   }
 
+  export function isHistoryMove(row: number, col: number) {
+    let historyMove = gameLogic.getPlayerHistoryMove(currentUpdateUI.state, currentUpdateUI.turnIndex)
+    return historyMove[row][col];
+  }
+
   export function cellClicked(row: number, col: number): void {
     log.info("Clicked on cell:", row, col);
     if (clickCount >= 2 || isFlipped(row, col)) {
@@ -306,7 +323,6 @@ module game {
   }
 
   export function isFlipped(row: number, col: number) : boolean {
-    log.info("isFlipped", row, col, state.shownBoard[row][col] != -1);
     return state.shownBoard[row][col] != -1;
   }
 
@@ -355,7 +371,6 @@ module game {
 
   export function getImage(row : number, col : number): string {
     let idx: number = state.board[row][col];
-    log.info(images[idx]);
     return images[idx];
   }
 
@@ -370,23 +385,15 @@ module game {
   }
 
   export function getStatus(): number {
-    //TODO
-    return 1;
-  }
-
-  export function isMyTurn(): boolean {
-    //TODO
-    return true;
+    return gameLogic.status;
   }
 
   export function getRow(): number {
-    //TODO
-    return 4;
+    return gameLogic.rows;
   }
 
   export function getCol(): number {
-    //TODO
-    return 4;
+    return gameLogic.cols;
   }
 
   export function getHeight(): number {

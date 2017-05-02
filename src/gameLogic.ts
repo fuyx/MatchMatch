@@ -11,6 +11,7 @@ interface IState {
                        // 1 for only player 1 clicked; 2 for both of them clicked
   delta1: BoardDelta;
   delta2: BoardDelta;
+  status: number;
 }
 
 import gameService = gamingPlatform.gameService;
@@ -23,10 +24,15 @@ import dragAndDropService = gamingPlatform.dragAndDropService;
 module gameLogic {
   export let rows = 4;
   export let cols = 4;
-  export let size = rows * cols / 2;
+  export let size = 8;
+  export let status = 0;
 
   /** Returns the initial TicTacToe board, which is a ROWSxCOLS matrix containing ''. */
-  export function getInitialBoards(): [Board, Board, Board] {
+  export function getInitialBoards(rows: number, cols:number): [Board, Board, Board] {
+    rows = rows;
+    cols = cols;
+    size = rows * cols / 2
+    log.info("getInitialBoards", rows, cols, size);
     let board: Board = [];
     let shownBoard: Board = [];
     let clickedBoard: Board = [];
@@ -52,10 +58,10 @@ module gameLogic {
     return [board, shownBoard, clickedBoard];
   }
 
-  export function getInitialState(): IState {
-    let initBoards = getInitialBoards();
+  export function getInitialState(rows:number,cols:number): IState {
+    let initBoards = getInitialBoards(rows,cols);
     return {board: initBoards[0], shownBoard: initBoards[1], clickedBoard: initBoards[2], 
-      delta1: null, delta2: null};
+      delta1: null, delta2: null, status: 0};
   }
 
   /**
@@ -104,8 +110,20 @@ module gameLogic {
         score1++;
       }
     }
-    log.info("computeScores ", score0, score1);
     return [score0, score1];
+  }
+
+  export function chooseSize(rows: number, cols: number, turnIndex: number): IMove {
+    rows = rows;
+    cols = cols;
+    let state = getInitialState(rows,cols);
+    let move: IMove = {
+      endMatchScores: null,
+      turnIndex: turnIndex,
+      state: state
+    };
+    log.info("chooseSize", move);
+    return move;
   }
 
   /**
@@ -114,9 +132,8 @@ module gameLogic {
    */
   export function createMove(
       stateBeforeMove: IState, row: number, col: number, turnIndexBeforeMove: number): IMove {
-    if (!stateBeforeMove) {
-      stateBeforeMove = getInitialState();
-    }
+    rows = stateBeforeMove.board.length;
+    cols = stateBeforeMove.board[0].length;
     let shownBoard: Board = stateBeforeMove.shownBoard;
     if (shownBoard[row][col] !== -1) {
       throw new Error("One can only make a move in an empty position!");
@@ -155,10 +172,10 @@ module gameLogic {
     let delta: BoardDelta = {row: row, col: col};
 
     let state: IState = {delta1: delta, delta2: null, shownBoard: shownBoardAfterMove, 
-      board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard};
+      board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard, status:1};
     if (stateBeforeMove.delta1 != null && stateBeforeMove.delta2 == null) {
       state = {delta1: stateBeforeMove.delta1, delta2: delta, shownBoard: shownBoardAfterMove, 
-        board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard};
+        board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard, status:1};
     }
     
     log.info("gameLogic.createMove", state);
@@ -199,14 +216,10 @@ module gameLogic {
     }
     return historyMove;
   }
-
-  export function resizeBoard() {
-    size = rows * cols / 2;
-  }
   
-  export function createInitialMove(): IMove {
+  export function createInitialMove(rows:number, cols:number): IMove {
     return {endMatchScores: null, turnIndex: 0, 
-        state: getInitialState()};  
+        state: getInitialState(rows,cols)};  
   }
 
   export function forSimpleTestHtml() {

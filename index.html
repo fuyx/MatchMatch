@@ -30,13 +30,13 @@
     {{game.getScores()[0][1]}}: {{game.getScores()[1][1]}}
   </div>
 	<div class="board" ng-if="game.getStatus() == 0">
-		<div ng-if="!game.isMyTurn()">
+		<div ng-if="game.showChoosePanel()">
 			<p class="wait">Please choose game size:</p>
-			<div class="sizebtn" ng-click="">3 X 4</div>
-			<div class="sizebtn" ng-click="">4 X 4</div>
-			<div class="sizebtn" ng-click="">4 X 5</div>
+			<div class="sizebtn" ng-click="game.chooseSize(3,4)">3 X 4</div>
+			<div class="sizebtn" ng-click="game.chooseSize(4,4)">4 X 4</div>
+			<div class="sizebtn" ng-click="game.chooseSize(4,5)">4 X 5</div>
 		</div>
-		<div ng-if="game.isMyTurn()">
+		<div ng-if="!game.showChoosePanel()">
 			<p class="wait">Your opponent is choosing game size. Waiting...</p>
 			<div class="loader"></div>
 		</div>
@@ -58,6 +58,27 @@
 		</div>
 	</div>
 	<div class="board" ng-if="game.getStatus() == 2">
+    <div ng-repeat="row in game.getRowArray()"
+			style="position:absolute; top:{{row * game.getHeight()}}%; left:0; width:100%; height:{{game.getHeight()}}%;">
+			<div ng-repeat="col in game.getColArray()"
+				 style="position:absolute; top:0; left:{{col * game.getWidth()}}%; width:{{game.getWidth()}}%; height:100%;">
+      
+        <div class="container" ng-style="game.getCellStyle(row, col)">
+          <div ng-if="!game.isHistoryMove(row,col)"
+            <div class="card">
+                <img class="front" ng-src="img/back.png">
+                <img class="back" ng-src="img/{{game.getImage(row, col)}}.png">
+            </div>
+          </div>
+          <div ng-if="game.isHistoryMove(row,col)"
+            <div class="card">
+                <img class="front" ng-src="img/{{game.getImage(row, col)}}.png">
+                <img class="back" ng-src="img/back.png">
+            </div>
+          </div>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 

@@ -42,6 +42,9 @@ body {
 }
 
 .status {
+  font-size: 12pt;
+  margin-left:8%;
+  margin-right:8%;
   position:absolute;
   top:0%;
 }

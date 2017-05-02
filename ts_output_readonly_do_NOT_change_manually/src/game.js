@@ -50,24 +50,6 @@ var game;
         game.images[9] = "mango";
     }
     game.init = init;
-    function setBoardRows(rows) {
-        gameLogic.rows = rows;
-        gameLogic.resizeBoard();
-    }
-    game.setBoardRows = setBoardRows;
-    function getBoardRows() {
-        return gameLogic.rows;
-    }
-    game.getBoardRows = getBoardRows;
-    function setBardCols(cols) {
-        gameLogic.cols = cols;
-        gameLogic.resizeBoard();
-    }
-    game.setBardCols = setBardCols;
-    function getBoardCols() {
-        return gameLogic.cols;
-    }
-    game.getBoardCols = getBoardCols;
     function registerServiceWorker() {
         // I prefer to use appCache over serviceWorker
         // (because iOS doesn't support serviceWorker, so we have to use appCache)
@@ -142,8 +124,11 @@ var game;
         game.currentUpdateUI = params;
         clearAnimationTimeout();
         game.state = params.state;
+        if (game.state != null) {
+            gameLogic.rows = game.state.board.length;
+            gameLogic.cols = game.state.board[0].length;
+        }
         if (isFirstMove()) {
-            game.state = gameLogic.getInitialState();
         }
         else {
             if (params.playMode === 'passAndPlay') {
@@ -164,6 +149,9 @@ var game;
                 }, 50);
             }
         }
+        if (params.state != null) {
+            gameLogic.status = params.state.status;
+        }
         log.info(game);
         // We calculate the AI move only after the animation finishes,
         // because if we call aiService now
@@ -171,6 +159,18 @@ var game;
         game.animationEndedTimeout = game.$timeout(animationEndedCallback, 500);
     }
     game.updateUI = updateUI;
+    function showChoosePanel() {
+        if (game.playMode == 'passAndPlay') {
+            return true;
+        }
+        else if (game.playMode == 'playAgainstTheComputer') {
+            return true;
+        }
+        else {
+            return isMyTurn();
+        }
+    }
+    game.showChoosePanel = showChoosePanel;
     function animationEndedCallback() {
         log.info("Animation ended");
         maybeSendComputerMove();
@@ -193,20 +193,37 @@ var game;
         log.info("Computer move: ", move);
         makeMove(move);
     }
+    function chooseSize(rows, cols) {
+        log.info("chooseSize", rows, cols);
+        var move = gameLogic.chooseSize(rows, cols, game.currentUpdateUI.turnIndex);
+        makeMove(move);
+    }
+    game.chooseSize = chooseSize;
     function makeMove(move) {
-        if (move.state.delta2 == null) {
-            log.info("game.makeMove -> expect 2nd click...");
-            return;
+        var needDelay = true;
+        if (move.state.status == 0) {
+            move.state.status = 1;
+            needDelay = false;
         }
-        if (game.didMakeMove) {
-            return;
+        else {
+            if (move.state.delta2 == null) {
+                log.info("game.makeMove -> expect 2nd click...");
+                return;
+            }
+            if (game.didMakeMove) {
+                return;
+            }
         }
         game.didMakeMove = true;
         if (!game.proposals) {
-            setTimeout(function () { gameService.makeMove(move, null); }, 1000);
+            if (needDelay) {
+                setTimeout(function () { gameService.makeMove(move, null); }, 1000);
+            }
+            else {
+                gameService.makeMove(move, null);
+            }
         }
         else {
-            // TODO implement community game later.
         }
     }
     function getScores() {
@@ -231,7 +248,6 @@ var game;
             scores[0] = scores[1];
             scores[1] = scores[0];
         }
-        log.info("getScores: ", playerName, scores);
         return [playerName, scores];
     }
     game.getScores = getScores;
@@ -257,6 +273,11 @@ var game;
             game.currentUpdateUI.turnIndex >= 0 &&
             game.currentUpdateUI.yourPlayerIndex === game.currentUpdateUI.turnIndex; // it's my turn
     }
+    function isHistoryMove(row, col) {
+        var historyMove = gameLogic.getPlayerHistoryMove(game.currentUpdateUI.state, game.currentUpdateUI.turnIndex);
+        return historyMove[row][col];
+    }
+    game.isHistoryMove = isHistoryMove;
     function cellClicked(row, col) {
         log.info("Clicked on cell:", row, col);
         if (game.clickCount >= 2 || isFlipped(row, col)) {
@@ -280,7 +301,6 @@ var game;
     }
     game.cellClicked = cellClicked;
     function isFlipped(row, col) {
-        log.info("isFlipped", row, col, game.state.shownBoard[row][col] != -1);
         return game.state.shownBoard[row][col] != -1;
     }
     game.isFlipped = isFlipped;
@@ -328,7 +348,6 @@ var game;
     game.getColor = getColor;
     function getImage(row, col) {
         var idx = game.state.board[row][col];
-        log.info(game.images[idx]);
         return game.images[idx];
     }
     game.getImage = getImage;
@@ -345,18 +364,15 @@ var game;
     }
     game.getPos = getPos;
     function getStatus() {
-        //TODO
-        return 1;
+        return gameLogic.status;
     }
     game.getStatus = getStatus;
     function getRow() {
-        //TODO
-        return 4;
+        return gameLogic.rows;
     }
     game.getRow = getRow;
     function getCol() {
-        //TODO
-        return 4;
+        return gameLogic.cols;
     }
     game.getCol = getCol;
     function getHeight() {
