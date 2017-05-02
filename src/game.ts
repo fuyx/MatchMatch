@@ -296,7 +296,8 @@ module game {
   }
 
   export function isHistoryMove(row: number, col: number) {
-    let historyMove = gameLogic.getPlayerHistoryMove(currentUpdateUI.state, currentUpdateUI.turnIndex)
+    let historyMove = gameLogic.getPlayerHistoryMove(currentUpdateUI.state, currentUpdateUI.turnIndex) 
+    log.info("isHistoryMove", historyMove[row][col]);
     return historyMove[row][col];
   }
 
@@ -362,6 +363,11 @@ module game {
     }
     return ret;
     // return true;
+  }
+
+  export function setStatus(status: number) {
+    log.info("setStatus", status)
+    gameLogic.status = status;
   }
 
   export function getColor(row : number, col : number): string {

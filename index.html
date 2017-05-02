@@ -28,6 +28,16 @@
   <div class="status" ng-if="game.getStatus() != 0">
     {{game.getScores()[0][0]}}: {{game.getScores()[1][0]}}
     {{game.getScores()[0][1]}}: {{game.getScores()[1][1]}}
+    <div ng-if="game.getStatus() == 1">
+      <button ng-click="game.setStatus(2)">
+        Show history
+      </button>
+    </div>
+    <div ng-if="game.getStatus() == 2">
+      <button ng-click="game.setStatus(1)">
+        Back
+      </button>
+    </div>
   </div>
 	<div class="board" ng-if="game.getStatus() == 0">
 		<div ng-if="game.showChoosePanel()">
@@ -64,18 +74,18 @@
 				 style="position:absolute; top:0; left:{{col * game.getWidth()}}%; width:{{game.getWidth()}}%; height:100%;">
       
         <div class="container" ng-style="game.getCellStyle(row, col)">
-          <div ng-if="!game.isHistoryMove(row,col)"
-            <div class="card">
+          
+          <div class="card">
+              <div ng-if="!game.isHistoryMove(row,col)">
                 <img class="front" ng-src="img/back.png">
                 <img class="back" ng-src="img/{{game.getImage(row, col)}}.png">
-            </div>
-          </div>
-          <div ng-if="game.isHistoryMove(row,col)"
-            <div class="card">
+              </div>
+              <div ng-if="game.isHistoryMove(row,col)">
                 <img class="front" ng-src="img/{{game.getImage(row, col)}}.png">
                 <img class="back" ng-src="img/back.png">
-            </div>
+              </div>
           </div>
+        
 				</div>
 			</div>
 		</div>

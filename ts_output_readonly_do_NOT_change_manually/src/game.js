@@ -275,6 +275,7 @@ var game;
     }
     function isHistoryMove(row, col) {
         var historyMove = gameLogic.getPlayerHistoryMove(game.currentUpdateUI.state, game.currentUpdateUI.turnIndex);
+        log.info("isHistoryMove", historyMove[row][col]);
         return historyMove[row][col];
     }
     game.isHistoryMove = isHistoryMove;
@@ -341,6 +342,11 @@ var game;
         // return true;
     }
     game.shouldSlowlyDisappear = shouldSlowlyDisappear;
+    function setStatus(status) {
+        log.info("setStatus", status);
+        gameLogic.status = status;
+    }
+    game.setStatus = setStatus;
     function getColor(row, col) {
         var idx = game.state.board[row][col];
         return game.colors[idx];

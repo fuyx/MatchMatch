@@ -208,9 +208,9 @@ module gameLogic {
       historyMove[i] = [];
       for (let j = 0; j < cols; j++) {
         if (clickedBoard[i][j] == 2 || clickedBoard[i][j] == turnIndexBeforeMove) {
-          historyMove[i][j] == true;
+          historyMove[i][j] = true;
         } else {
-          historyMove[i][j] == false;
+          historyMove[i][j] = false;
         }
       }
     }
