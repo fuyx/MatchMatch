@@ -129,6 +129,13 @@ var game;
             gameLogic.cols = game.state.board[0].length;
         }
         if (isFirstMove()) {
+            log.info("isFirstMove");
+            gameLogic.status = 0;
+            // if(getStatus() != 0) {
+            //   state = gameLogic.getInitialState(currentUpdateUI.state.board.length, currentUpdateUI.state.board[0].length);
+            // } else {
+            //   gameLogic.status = 0;
+            // }
         }
         else {
             if (params.playMode === 'passAndPlay') {

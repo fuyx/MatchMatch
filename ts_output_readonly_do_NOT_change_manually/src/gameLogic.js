@@ -169,14 +169,16 @@ var gameLogic;
     }
     gameLogic.createMove = createMove;
     function checkMatch(state) {
-        var delta1 = state.delta1;
-        var delta2 = state.delta2;
-        var board = state.board;
-        if (delta1 != null && delta2 != null) {
-            if (board[delta1.row][delta1.col] != board[delta2.row][delta2.col]) {
-                state.shownBoard[delta1.row][delta1.col] = -1;
-                state.shownBoard[delta2.row][delta2.col] = -1;
-                return false;
+        if (state != null) {
+            var delta1 = state.delta1;
+            var delta2 = state.delta2;
+            var board = state.board;
+            if (delta1 != null && delta2 != null) {
+                if (board[delta1.row][delta1.col] != board[delta2.row][delta2.col]) {
+                    state.shownBoard[delta1.row][delta1.col] = -1;
+                    state.shownBoard[delta2.row][delta2.col] = -1;
+                    return false;
+                }
             }
         }
         return true;

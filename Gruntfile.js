@@ -120,7 +120,7 @@ module.exports = function(grunt) {
     copy: {
       imgs: {
         expand: true,
-        src: 'imgs/*.*',
+        src: 'img/*.*',
         dest: 'dist/'
       },
       sw: {

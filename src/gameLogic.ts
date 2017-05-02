@@ -188,14 +188,16 @@ module gameLogic {
   }
 
   export function checkMatch(state: IState): boolean {
-    let delta1 = state.delta1;
-    let delta2 = state.delta2;
-    let board = state.board;
-    if(delta1 != null && delta2 != null) {
-      if(board[delta1.row][delta1.col] != board[delta2.row][delta2.col]) {
-        state.shownBoard[delta1.row][delta1.col] = -1;
-        state.shownBoard[delta2.row][delta2.col] = -1;
-        return false;
+    if (state != null) {
+      let delta1 = state.delta1;
+      let delta2 = state.delta2;
+      let board = state.board;
+      if(delta1 != null && delta2 != null) {
+        if(board[delta1.row][delta1.col] != board[delta2.row][delta2.col]) {
+          state.shownBoard[delta1.row][delta1.col] = -1;
+          state.shownBoard[delta2.row][delta2.col] = -1;
+          return false;
+        }
       }
     }
     return true;
