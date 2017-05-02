@@ -32100,9 +32100,6 @@ var game;
         else if (game.playMode == '1') {
             playerName[1] = "My score";
             playerName[0] = "Opponent score";
-            var tmp = scores[0];
-            scores[0] = scores[1];
-            scores[1] = scores[0];
         }
         return [playerName, scores];
     }
