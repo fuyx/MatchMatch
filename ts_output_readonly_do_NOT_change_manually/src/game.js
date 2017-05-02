@@ -138,7 +138,7 @@ var game;
             // }
         }
         else {
-            if (params.playMode === 'passAndPlay') {
+            if (params.playMode === 'passAndPlay' || params.playMode === 'playAgainstTheComputer') {
                 if (!gameLogic.checkMatch(game.state)) {
                     game.neededDisappear = true;
                     game.disappear = { row1: game.state.delta1.row, col1: game.state.delta1.col,

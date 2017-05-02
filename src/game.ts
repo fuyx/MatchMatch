@@ -157,7 +157,7 @@ module game {
       //   gameLogic.status = 0;
       // }
   } else {
-      if (params.playMode === 'passAndPlay'){
+      if (params.playMode === 'passAndPlay' || params.playMode === 'playAgainstTheComputer'){
         if(!gameLogic.checkMatch(state)) {
           neededDisappear = true;
           disappear = {row1: state.delta1.row, col1: state.delta1.col, 
