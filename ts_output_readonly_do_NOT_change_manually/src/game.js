@@ -224,6 +224,7 @@ var game;
             }
         }
         else {
+            // TODO implement community game later.
         }
     }
     function getScores() {

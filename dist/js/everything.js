@@ -31638,44 +31638,53 @@ var log = gamingPlatform.log;
 var dragAndDropService = gamingPlatform.dragAndDropService;
 var gameLogic;
 (function (gameLogic) {
-    gameLogic.ROWS = 4;
-    gameLogic.COLS = 4;
-    gameLogic.SIZE = gameLogic.ROWS * gameLogic.COLS / 2;
+    gameLogic.rows = 4;
+    gameLogic.cols = 4;
+    gameLogic.size = 8;
+    gameLogic.status = 0;
     /** Returns the initial TicTacToe board, which is a ROWSxCOLS matrix containing ''. */
-    function getInitialBoards() {
+    function getInitialBoards(rows, cols) {
+        rows = rows;
+        cols = cols;
+        gameLogic.size = rows * cols / 2;
+        log.info("getInitialBoards", rows, cols, gameLogic.size);
         var board = [];
         var shownBoard = [];
+        var clickedBoard = [];
         var counts = [];
-        for (var i = 0; i < gameLogic.SIZE; i++) {
+        for (var i = 0; i < gameLogic.size; i++) {
             counts[i] = 0;
         }
-        for (var i = 0; i < gameLogic.ROWS; i++) {
+        for (var i = 0; i < rows; i++) {
             board[i] = [];
             shownBoard[i] = [];
-            for (var j = 0; j < gameLogic.COLS; j++) {
-                var n = Math.floor(Math.random() * gameLogic.SIZE);
+            clickedBoard[i] = [];
+            for (var j = 0; j < cols; j++) {
+                var n = Math.floor(Math.random() * gameLogic.size);
                 while (counts[n] >= 2) {
-                    n = Math.floor(Math.random() * gameLogic.SIZE);
+                    n = Math.floor(Math.random() * gameLogic.size);
                 }
                 counts[n]++;
                 board[i][j] = n;
                 shownBoard[i][j] = -1;
+                clickedBoard[i][j] = -1;
             }
         }
-        return [board, shownBoard];
+        return [board, shownBoard, clickedBoard];
     }
     gameLogic.getInitialBoards = getInitialBoards;
-    function getInitialState() {
-        var initBoards = getInitialBoards();
-        return { board: initBoards[0], shownBoard: initBoards[1], delta1: null, delta2: null };
+    function getInitialState(rows, cols) {
+        var initBoards = getInitialBoards(rows, cols);
+        return { board: initBoards[0], shownBoard: initBoards[1], clickedBoard: initBoards[2],
+            delta1: null, delta2: null, status: 0 };
     }
     gameLogic.getInitialState = getInitialState;
     /**
      *
      */
     function hasEmptyGrid(board) {
-        for (var i = 0; i < gameLogic.ROWS; i++) {
-            for (var j = 0; j < gameLogic.COLS; j++) {
+        for (var i = 0; i < gameLogic.rows; i++) {
+            for (var j = 0; j < gameLogic.cols; j++) {
                 if (board[i][j] === -1) {
                     // If there is an empty cell then we do not have a tie.
                     return true;
@@ -31688,30 +31697,57 @@ var gameLogic;
     /**
      *
      */
-    function computeScores(board) {
+    function computeScores(board, shownBoard) {
         // scan the board and compute the socre
         var score0 = 0;
         var score1 = 0;
-        for (var i = 0; i < gameLogic.ROWS; i++) {
-            for (var j = 0; j < gameLogic.COLS; j++) {
-                if (board[i][j] == 0) {
-                    score0++;
+        var player1Counts = [];
+        var player2Counts = [];
+        for (var i = 0; i < gameLogic.size; i++) {
+            player1Counts[i] = 0;
+            player2Counts[i] = 0;
+        }
+        for (var i = 0; i < gameLogic.rows; i++) {
+            for (var j = 0; j < gameLogic.cols; j++) {
+                if (shownBoard[i][j] == 0) {
+                    player1Counts[board[i][j]]++;
                 }
-                else if (board[i][j] == 1) {
-                    score1++;
+                else if (shownBoard[i][j] == 1) {
+                    player2Counts[board[i][j]]++;
                 }
+            }
+        }
+        for (var i = 0; i < gameLogic.size; i++) {
+            if (player1Counts[i] == 2) {
+                score0++;
+            }
+            if (player2Counts[i] == 2) {
+                score1++;
             }
         }
         return [score0, score1];
     }
+    gameLogic.computeScores = computeScores;
+    function chooseSize(rows, cols, turnIndex) {
+        rows = rows;
+        cols = cols;
+        var state = getInitialState(rows, cols);
+        var move = {
+            endMatchScores: null,
+            turnIndex: turnIndex,
+            state: state
+        };
+        log.info("chooseSize", move);
+        return move;
+    }
+    gameLogic.chooseSize = chooseSize;
     /**
      * Returns the move that should be performed when player
      * with index turnIndexBeforeMove makes a move in cell row X col.
      */
     function createMove(stateBeforeMove, row, col, turnIndexBeforeMove) {
-        if (!stateBeforeMove) {
-            stateBeforeMove = getInitialState();
-        }
+        gameLogic.rows = stateBeforeMove.board.length;
+        gameLogic.cols = stateBeforeMove.board[0].length;
         var shownBoard = stateBeforeMove.shownBoard;
         if (shownBoard[row][col] !== -1) {
             throw new Error("One can only make a move in an empty position!");
@@ -31721,7 +31757,14 @@ var gameLogic;
         }
         var shownBoardAfterMove = angular.copy(shownBoard);
         shownBoardAfterMove[row][col] = turnIndexBeforeMove;
-        var scores = computeScores(shownBoardAfterMove);
+        // update clickedBoard
+        if (stateBeforeMove.clickedBoard[row][col] == -1) {
+            stateBeforeMove.clickedBoard[row][col] = turnIndexBeforeMove;
+        }
+        else if (stateBeforeMove.clickedBoard[row][col] != turnIndexBeforeMove) {
+            stateBeforeMove.clickedBoard[row][col] = 2;
+        }
+        var scores = computeScores(stateBeforeMove.board, shownBoardAfterMove);
         var endMatchScores;
         var turnIndex;
         if (!hasEmptyGrid(shownBoardAfterMove)) {
@@ -31744,10 +31787,10 @@ var gameLogic;
         }
         var delta = { row: row, col: col };
         var state = { delta1: delta, delta2: null, shownBoard: shownBoardAfterMove,
-            board: stateBeforeMove.board };
+            board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard, status: 1 };
         if (stateBeforeMove.delta1 != null && stateBeforeMove.delta2 == null) {
             state = { delta1: stateBeforeMove.delta1, delta2: delta, shownBoard: shownBoardAfterMove,
-                board: stateBeforeMove.board };
+                board: stateBeforeMove.board, clickedBoard: stateBeforeMove.clickedBoard, status: 1 };
         }
         log.info("gameLogic.createMove", state);
         return {
@@ -31771,9 +31814,26 @@ var gameLogic;
         return true;
     }
     gameLogic.checkMatch = checkMatch;
-    function createInitialMove() {
+    function getPlayerHistoryMove(stateBeforeMove, turnIndexBeforeMove) {
+        var historyMove = [];
+        var clickedBoard = stateBeforeMove.clickedBoard;
+        for (var i = 0; i < gameLogic.rows; i++) {
+            historyMove[i] = [];
+            for (var j = 0; j < gameLogic.cols; j++) {
+                if (clickedBoard[i][j] == 2 || clickedBoard[i][j] == turnIndexBeforeMove) {
+                    historyMove[i][j] = true;
+                }
+                else {
+                    historyMove[i][j] = false;
+                }
+            }
+        }
+        return historyMove;
+    }
+    gameLogic.getPlayerHistoryMove = getPlayerHistoryMove;
+    function createInitialMove(rows, cols) {
         return { endMatchScores: null, turnIndex: 0,
-            state: getInitialState() };
+            state: getInitialState(rows, cols) };
     }
     gameLogic.createInitialMove = createInitialMove;
     function forSimpleTestHtml() {
@@ -31801,6 +31861,7 @@ var game;
     game.proposals = null;
     game.yourPlayerInfo = null;
     game.colors = [];
+    game.images = [];
     game.clickCount = 0;
     game.neededDisappear = false;
     game.disappear = null;
@@ -31823,6 +31884,16 @@ var game;
         game.colors[5] = "purple";
         game.colors[6] = "gray";
         game.colors[7] = "orange";
+        game.images[0] = "cherry";
+        game.images[1] = "apple";
+        game.images[2] = "grapes";
+        game.images[3] = "kiwi";
+        game.images[4] = "orange";
+        game.images[5] = "pineapple";
+        game.images[6] = "strawberry";
+        game.images[7] = "watermelon";
+        game.images[8] = "bananas";
+        game.images[9] = "mango";
     }
     game.init = init;
     function registerServiceWorker() {
@@ -31865,9 +31936,9 @@ var game;
     game.getCellStyle = getCellStyle;
     function getProposalsBoard(playerIdToProposal) {
         var proposals = [];
-        for (var i = 0; i < gameLogic.ROWS; i++) {
+        for (var i = 0; i < gameLogic.rows; i++) {
             proposals[i] = [];
-            for (var j = 0; j < gameLogic.COLS; j++) {
+            for (var j = 0; j < gameLogic.cols; j++) {
                 proposals[i][j] = 0;
             }
         }
@@ -31895,11 +31966,15 @@ var game;
             if (game.currentUpdateUI && angular.equals(game.currentUpdateUI, params))
                 return;
         }
+        game.playMode = params.playMode;
         game.currentUpdateUI = params;
         clearAnimationTimeout();
         game.state = params.state;
+        if (game.state != null) {
+            gameLogic.rows = game.state.board.length;
+            gameLogic.cols = game.state.board[0].length;
+        }
         if (isFirstMove()) {
-            game.state = gameLogic.getInitialState();
         }
         else {
             if (params.playMode === 'passAndPlay') {
@@ -31920,6 +31995,9 @@ var game;
                 }, 50);
             }
         }
+        if (params.state != null) {
+            gameLogic.status = params.state.status;
+        }
         log.info(game);
         // We calculate the AI move only after the animation finishes,
         // because if we call aiService now
@@ -31927,6 +32005,18 @@ var game;
         game.animationEndedTimeout = game.$timeout(animationEndedCallback, 500);
     }
     game.updateUI = updateUI;
+    function showChoosePanel() {
+        if (game.playMode == 'passAndPlay') {
+            return true;
+        }
+        else if (game.playMode == 'playAgainstTheComputer') {
+            return true;
+        }
+        else {
+            return isMyTurn();
+        }
+    }
+    game.showChoosePanel = showChoosePanel;
     function animationEndedCallback() {
         log.info("Animation ended");
         maybeSendComputerMove();
@@ -31949,22 +32039,65 @@ var game;
         log.info("Computer move: ", move);
         makeMove(move);
     }
+    function chooseSize(rows, cols) {
+        log.info("chooseSize", rows, cols);
+        var move = gameLogic.chooseSize(rows, cols, game.currentUpdateUI.turnIndex);
+        makeMove(move);
+    }
+    game.chooseSize = chooseSize;
     function makeMove(move) {
-        if (move.state.delta2 == null) {
-            log.info("game.makeMove -> expect 2nd click...");
-            return;
+        var needDelay = true;
+        if (move.state.status == 0) {
+            move.state.status = 1;
+            needDelay = false;
         }
-        if (game.didMakeMove) {
-            return;
+        else {
+            if (move.state.delta2 == null) {
+                log.info("game.makeMove -> expect 2nd click...");
+                return;
+            }
+            if (game.didMakeMove) {
+                return;
+            }
         }
         game.didMakeMove = true;
         if (!game.proposals) {
-            setTimeout(function () { gameService.makeMove(move, null); }, 200);
+            if (needDelay) {
+                setTimeout(function () { gameService.makeMove(move, null); }, 1000);
+            }
+            else {
+                gameService.makeMove(move, null);
+            }
         }
         else {
             // TODO implement community game later.
         }
     }
+    function getScores() {
+        var playerName = [];
+        var scores = gameLogic.computeScores(game.state.board, game.state.shownBoard);
+        if (game.playMode == 'playAgainstTheComputer') {
+            playerName[0] = "My score";
+            playerName[1] = "Computer";
+        }
+        else if (game.playMode == 'passAndPlay') {
+            playerName[0] = "Player1";
+            playerName[1] = "Player2";
+        }
+        else if (game.playMode == '0') {
+            playerName[0] = "My score";
+            playerName[1] = "Opponent score";
+        }
+        else if (game.playMode == '1') {
+            playerName[1] = "My score";
+            playerName[0] = "Opponent score";
+            var tmp = scores[0];
+            scores[0] = scores[1];
+            scores[1] = scores[0];
+        }
+        return [playerName, scores];
+    }
+    game.getScores = getScores;
     function isFirstMove() {
         return !game.currentUpdateUI.state;
     }
@@ -31987,9 +32120,15 @@ var game;
             game.currentUpdateUI.turnIndex >= 0 &&
             game.currentUpdateUI.yourPlayerIndex === game.currentUpdateUI.turnIndex; // it's my turn
     }
+    function isHistoryMove(row, col) {
+        var historyMove = gameLogic.getPlayerHistoryMove(game.currentUpdateUI.state, game.currentUpdateUI.yourPlayerIndex);
+        log.info("isHistoryMove", historyMove[row][col]);
+        return historyMove[row][col];
+    }
+    game.isHistoryMove = isHistoryMove;
     function cellClicked(row, col) {
         log.info("Clicked on cell:", row, col);
-        if (game.clickCount > 2) {
+        if (game.clickCount >= 2 || isFlipped(row, col)) {
             return;
         }
         if (!isHumanTurn())
@@ -32004,10 +32143,15 @@ var game;
             return;
         }
         game.clickCount++;
+        log.info("cellClicked - state.shownBoard", game.state.shownBoard);
         // Move is legal, make it!
         makeMove(nextMove);
     }
     game.cellClicked = cellClicked;
+    function isFlipped(row, col) {
+        return game.state.shownBoard[row][col] != -1;
+    }
+    game.isFlipped = isFlipped;
     function isShow(row, col) {
         return true;
         //return state.shownBoard[row][col] == -1;
@@ -32045,11 +32189,21 @@ var game;
         // return true;
     }
     game.shouldSlowlyDisappear = shouldSlowlyDisappear;
+    function setStatus(status) {
+        log.info("setStatus", status);
+        gameLogic.status = status;
+    }
+    game.setStatus = setStatus;
     function getColor(row, col) {
         var idx = game.state.board[row][col];
         return game.colors[idx];
     }
     game.getColor = getColor;
+    function getImage(row, col) {
+        var idx = game.state.board[row][col];
+        return game.images[idx];
+    }
+    game.getImage = getImage;
     function getPos(coord) {
         if (coord == 0) {
             return "0";
@@ -32062,6 +32216,34 @@ var game;
         }
     }
     game.getPos = getPos;
+    function getStatus() {
+        return gameLogic.status;
+    }
+    game.getStatus = getStatus;
+    function getRow() {
+        return gameLogic.rows;
+    }
+    game.getRow = getRow;
+    function getCol() {
+        return gameLogic.cols;
+    }
+    game.getCol = getCol;
+    function getHeight() {
+        return 100.0 / getRow();
+    }
+    game.getHeight = getHeight;
+    function getWidth() {
+        return 100.0 / getCol();
+    }
+    game.getWidth = getWidth;
+    function getRowArray() {
+        return Array.apply(null, { length: getRow() }).map(Number.call, Number);
+    }
+    game.getRowArray = getRowArray;
+    function getColArray() {
+        return Array.apply(null, { length: getCol() }).map(Number.call, Number);
+    }
+    game.getColArray = getColArray;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(['$rootScope', '$timeout',
@@ -32078,18 +32260,18 @@ var aiService;
     function findComputerMove(move) {
         if (Math.random() > aiService.DIFFICULTY || move.state === null) {
             log.info("Random choose 2 grid.");
-            var i1 = Math.floor(Math.random() * gameLogic.ROWS);
-            var j1 = Math.floor(Math.random() * gameLogic.COLS);
+            var i1 = Math.floor(Math.random() * gameLogic.rows);
+            var j1 = Math.floor(Math.random() * gameLogic.cols);
             while (move.state !== null && move.state.shownBoard[i1][j1] !== -1) {
-                i1 = Math.floor(Math.random() * gameLogic.ROWS);
-                j1 = Math.floor(Math.random() * gameLogic.COLS);
+                i1 = Math.floor(Math.random() * gameLogic.rows);
+                j1 = Math.floor(Math.random() * gameLogic.cols);
             }
             var possibleMove = gameLogic.createMove(move.state, i1, j1, move.turnIndex);
-            var i2 = Math.floor(Math.random() * gameLogic.ROWS);
-            var j2 = Math.floor(Math.random() * gameLogic.COLS);
+            var i2 = Math.floor(Math.random() * gameLogic.rows);
+            var j2 = Math.floor(Math.random() * gameLogic.cols);
             while (move.state !== null && (move.state.shownBoard[i2][j2] !== -1 || (i1 === i2 && j1 === j2))) {
-                i2 = Math.floor(Math.random() * gameLogic.ROWS);
-                j2 = Math.floor(Math.random() * gameLogic.COLS);
+                i2 = Math.floor(Math.random() * gameLogic.rows);
+                j2 = Math.floor(Math.random() * gameLogic.cols);
             }
             log.info(i1, j1, i2, j2);
             possibleMove = gameLogic.createMove(possibleMove.state, i2, j2, move.turnIndex);
@@ -32097,13 +32279,13 @@ var aiService;
         }
         else {
             log.info("Find a match.");
-            for (var i = 0; i < gameLogic.ROWS; i++) {
-                for (var j = 0; j < gameLogic.COLS; j++) {
+            for (var i = 0; i < gameLogic.rows; i++) {
+                for (var j = 0; j < gameLogic.cols; j++) {
                     if (move.state.shownBoard[i][j] === -1) {
                         var target = move.state.board[i][j];
                         var possibleMove = gameLogic.createMove(move.state, i, j, move.turnIndex);
-                        for (var i2 = 0; i2 < gameLogic.ROWS; i2++) {
-                            for (var j2 = 0; j2 < gameLogic.COLS; j2++) {
+                        for (var i2 = 0; i2 < gameLogic.rows; i2++) {
+                            for (var j2 = 0; j2 < gameLogic.cols; j2++) {
                                 if (move.state.shownBoard[i2][j2] === -1 && !(i2 === i && j2 === j) &&
                                     move.state.board[i2][j2] === target) {
                                     log.info(i, j, i2, j2);
