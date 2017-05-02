@@ -1,3 +1,9 @@
+/**
+ * IMPORTANT: do not change anything in this file!
+ * This is the API between the game and the platform,
+ * and it cannot be changed.
+ */
+
 // This file describes all the services provided by the gaming platform.
 // See examples for the platform at:
 // https://friendlygo.com/
@@ -62,7 +68,9 @@ interface IGameService {
   // If a community match, you can only send a proposal once, so call makeMove only if
   // (updateUI.playerIdToProposal[updateUI.yourPlayerInfo.playerId] == undefined)
   // You must pass either move or proposal.
-  makeMove(move: IMove, proposal: IProposal): void;
+  // chatDescription is a text that will be shown in the community game chat,
+  // e.g., in a game of chess it will describe the move such as "Q-R5".
+  makeMove(move: IMove, proposal: IProposal, chatDescription: string): void;
 }
 
 // Your game must support the updateUI method.
@@ -74,6 +82,12 @@ interface IGame {
   // If it's your player's turn (updateUI.yourPlayerIndex == updateUI.turnIndex),
   // and your player didn't submit a proposal already (updateUI.playerIdToProposal[updateUI.yourPlayerInfo.playerId] == undefined),
   // then the UI should allow the player to make a move (and the game should call gameService.makeMove).
+  //
+  // In a speed match, whenever a player calls makeMove the opponent will get an updateUI.
+  // In contrast, in a ping-pong match, if a player calls makeMove but still set the turn to themselves,
+  // then the opponent will not get an updateUI (they'll only get it when the turn changes).
+  // So if a player in your game sets the turn to themselves, you should be careful to do the animations
+  // correctly, especially in ping-pong matches.
   updateUI(updateUI: IUpdateUI): void;
 
   // The platform supports players sharing a match on facebook, and therefore the platform
@@ -168,9 +182,17 @@ interface IUpdateUI extends IMove {
   // two communities (e.g., if it's a match between US and UK, avatarImageUrl will be a country flag).
   playersInfo: IPlayerInfo[];
 
+  // Deprecated: you should use matchType.
   // playMode is either 'passAndPlay', 'playAgainstTheComputer', or 
   // (if it's a multiplayer/community match) yourPlayerIndex (e.g., 0 or 1).
   playMode: PlayMode; 
+
+  // matchType is either:
+  // 'passAndPlay', 'playAgainstTheComputer',
+  // 'pingPongMultiplayer', 'speedMultiplayer',
+  // 'community'
+  // (for testing in the emulator, we also have 'onlyAIs')
+  matchType: string;
 
   // Below are fields set only in community matches.
   // Mapping playerId to their proposal.
@@ -196,7 +218,6 @@ interface IProposals {
 // the winning proposal and pass the selected move.
 interface IProposal {
   playerInfo: IPlayerInfo; // the player making the proposal.
-  chatDescription: string; // string representation of the proposal that will be shown in the community game chat.
   data: IProposalData; // IProposalData must be defined by the game.
 }
 

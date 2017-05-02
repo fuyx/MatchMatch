@@ -1,6 +1,7 @@
 ;
 var game;
 (function (game) {
+    var chatDiscription = 'Have fun!';
     game.$rootScope = null;
     game.$timeout = null;
     // Global variables are cleared when getting updateUI.
@@ -107,19 +108,8 @@ var game;
         log.info("Game got updateUI:", params);
         var playerIdToProposal = params.playerIdToProposal;
         // Only one move/proposal per updateUI
-        game.didMakeMove = playerIdToProposal && playerIdToProposal[game.yourPlayerInfo.playerId] != undefined;
         game.yourPlayerInfo = params.yourPlayerInfo;
         game.clickCount = 0;
-        game.proposals = playerIdToProposal ? getProposalsBoard(playerIdToProposal) : null;
-        if (playerIdToProposal) {
-            // If only proposals changed, then return.
-            // I don't want to disrupt the player if he's in the middle of a move.
-            // I delete playerIdToProposal field from params (and so it's also not in currentUpdateUI),
-            // and compare whether the objects are now deep-equal.
-            params.playerIdToProposal = null;
-            if (game.currentUpdateUI && angular.equals(game.currentUpdateUI, params))
-                return;
-        }
         game.playMode = params.playMode;
         game.currentUpdateUI = params;
         clearAnimationTimeout();
@@ -131,6 +121,7 @@ var game;
         if (isFirstMove()) {
             log.info("isFirstMove");
             gameLogic.status = 0;
+            game.didMakeMove = false;
             // if(getStatus() != 0) {
             //   state = gameLogic.getInitialState(currentUpdateUI.state.board.length, currentUpdateUI.state.board[0].length);
             // } else {
@@ -138,13 +129,14 @@ var game;
             // }
         }
         else {
-            if (params.playMode === 'passAndPlay' || params.playMode === 'playAgainstTheComputer') {
+            if (params.playMode === 'passAndPlay') {
                 if (!gameLogic.checkMatch(game.state)) {
                     game.neededDisappear = true;
                     game.disappear = { row1: game.state.delta1.row, col1: game.state.delta1.col,
                         row2: game.state.delta2.row, col2: game.state.delta2.col
                     };
                 }
+                game.didMakeMove = false;
             }
             else {
                 setTimeout(function () {
@@ -153,7 +145,8 @@ var game;
                         game.disappear = { row1: game.state.delta1.row, col1: game.state.delta1.col,
                             row2: game.state.delta2.row, col2: game.state.delta2.col };
                     }
-                }, 50);
+                    game.didMakeMove = false;
+                }, 300);
             }
         }
         if (params.state != null) {
@@ -224,10 +217,10 @@ var game;
         game.didMakeMove = true;
         if (!game.proposals) {
             if (needDelay) {
-                setTimeout(function () { gameService.makeMove(move, null); }, 1000);
+                setTimeout(function () { gameService.makeMove(move, null, chatDiscription); }, 1000);
             }
             else {
-                gameService.makeMove(move, null);
+                gameService.makeMove(move, null, chatDiscription);
             }
         }
         else {

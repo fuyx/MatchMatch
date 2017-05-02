@@ -30889,7 +30889,14 @@ $provide.value("$locale", {
 
 !window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
 ;
-"use strict"; var emulatorServicesCompilationDate = "Fri Feb 17 09:31:03 EST 2017";
+/**
+ * IMPORTANT: do not change anything in this file!
+ * These are are services that communicate between the game and the platform,
+ * and it cannot be changed.
+ */
+
+;
+"use strict"; var emulatorServicesCompilationDate = "Fri Apr 28 10:43:47 EDT 2017";
 
 ;
 var gamingPlatform;
@@ -30908,19 +30915,24 @@ var gamingPlatform;
             return ILogLevel;
         })();
         var alwaysLogs = [];
+        var logLaterFunctions = [];
         var lastLogs = [];
         var startTime = getCurrentTime();
         function getCurrentTime() {
             return new Date().getTime();
         }
         log_1.getCurrentTime = getCurrentTime;
+        function getMillisecondsFromStart() {
+            return getCurrentTime() - startTime;
+        }
+        log_1.getMillisecondsFromStart = getMillisecondsFromStart;
         function getLogEntry(args, logLevel, consoleFunc) {
-            var millisecondsFromStart = getCurrentTime() - startTime;
             // Note that if the first argument to console.log is a string,
             // then it's supposed to be a format string, see:
             // https://developer.mozilla.org/en-US/docs/Web/API/Console/log
             // However, the output looks better on chrome if I pass a string as the first argument,
             // and I hope then it doesn't break anything anywhere else...
+            var millisecondsFromStart = getMillisecondsFromStart();
             var secondsFromStart = millisecondsFromStart / 1000;
             var consoleArgs = ['', secondsFromStart, ' seconds:'].concat(args);
             consoleFunc.apply(console, consoleArgs);
@@ -30933,6 +30945,7 @@ var gamingPlatform;
             lastLogs.push(getLogEntry(args, logLevel, consoleFunc));
         }
         function getLogs() {
+            logLaterFunctions.map(function (func) { return alwaysLog(func()); });
             return lastLogs.concat(alwaysLogs);
         }
         log_1.getLogs = getLogs;
@@ -30944,6 +30957,10 @@ var gamingPlatform;
             alwaysLogs.push(getLogEntry(args, ILogLevel.ALWAYS, console.log));
         }
         log_1.alwaysLog = alwaysLog;
+        function logLater(func) {
+            logLaterFunctions.push(func);
+        }
+        log_1.logLater = logLater;
         function info() {
             var args = [];
             for (var _i = 0; _i < arguments.length; _i++) {
@@ -31064,9 +31081,6 @@ var gamingPlatform;
             if (move) {
                 checkMove(move);
             }
-            if (proposal && !proposal.chatDescription) {
-                throw new Error("You didn't set chatDescription in your proposal=" + angular.toJson(proposal, true));
-            }
         }
         function sendMessage(msg) {
             gamingPlatform.messageService.sendMessage(msg);
@@ -31076,10 +31090,13 @@ var gamingPlatform;
             iframe.contentWindow.postMessage(msg, "*");
         }
         var lastUpdateUiMessage = null;
-        function makeMove(move, proposal) {
+        function makeMove(move, proposal, chatDescription) {
+            if (!chatDescription) {
+                throw new Error("You didn't set chatDescription in makeMove!");
+            }
             checkMakeMove(lastUpdateUiMessage, move, proposal);
             // I'm sending the move even in local testing to make sure it's simple json (or postMessage will fail).
-            sendMessage({ move: move, proposal: proposal, lastMessage: { updateUI: lastUpdateUiMessage } });
+            sendMessage({ move: move, proposal: proposal, chatDescription: chatDescription, lastMessage: { updateUI: lastUpdateUiMessage } });
             lastUpdateUiMessage = null; // to make sure you don't call makeMove until you get the next updateUI.
         }
         gameService.makeMove = makeMove;
@@ -31164,6 +31181,7 @@ var gamingPlatform;
                 turnIndex: 0,
                 endMatchScores: null,
                 playMode: "passAndPlay",
+                matchType: "passAndPlay",
             });
         }
         gameService.setGame = setGame;
@@ -31849,6 +31867,7 @@ var gameLogic;
 ;
 var game;
 (function (game) {
+    var chatDiscription = 'Have fun!';
     game.$rootScope = null;
     game.$timeout = null;
     // Global variables are cleared when getting updateUI.
@@ -31955,19 +31974,8 @@ var game;
         log.info("Game got updateUI:", params);
         var playerIdToProposal = params.playerIdToProposal;
         // Only one move/proposal per updateUI
-        game.didMakeMove = playerIdToProposal && playerIdToProposal[game.yourPlayerInfo.playerId] != undefined;
         game.yourPlayerInfo = params.yourPlayerInfo;
         game.clickCount = 0;
-        game.proposals = playerIdToProposal ? getProposalsBoard(playerIdToProposal) : null;
-        if (playerIdToProposal) {
-            // If only proposals changed, then return.
-            // I don't want to disrupt the player if he's in the middle of a move.
-            // I delete playerIdToProposal field from params (and so it's also not in currentUpdateUI),
-            // and compare whether the objects are now deep-equal.
-            params.playerIdToProposal = null;
-            if (game.currentUpdateUI && angular.equals(game.currentUpdateUI, params))
-                return;
-        }
         game.playMode = params.playMode;
         game.currentUpdateUI = params;
         clearAnimationTimeout();
@@ -31979,6 +31987,7 @@ var game;
         if (isFirstMove()) {
             log.info("isFirstMove");
             gameLogic.status = 0;
+            game.didMakeMove = false;
             // if(getStatus() != 0) {
             //   state = gameLogic.getInitialState(currentUpdateUI.state.board.length, currentUpdateUI.state.board[0].length);
             // } else {
@@ -31986,13 +31995,14 @@ var game;
             // }
         }
         else {
-            if (params.playMode === 'passAndPlay' || params.playMode === 'playAgainstTheComputer') {
+            if (params.playMode === 'passAndPlay') {
                 if (!gameLogic.checkMatch(game.state)) {
                     game.neededDisappear = true;
                     game.disappear = { row1: game.state.delta1.row, col1: game.state.delta1.col,
                         row2: game.state.delta2.row, col2: game.state.delta2.col
                     };
                 }
+                game.didMakeMove = false;
             }
             else {
                 setTimeout(function () {
@@ -32001,7 +32011,8 @@ var game;
                         game.disappear = { row1: game.state.delta1.row, col1: game.state.delta1.col,
                             row2: game.state.delta2.row, col2: game.state.delta2.col };
                     }
-                }, 50);
+                    game.didMakeMove = false;
+                }, 300);
             }
         }
         if (params.state != null) {
@@ -32072,10 +32083,10 @@ var game;
         game.didMakeMove = true;
         if (!game.proposals) {
             if (needDelay) {
-                setTimeout(function () { gameService.makeMove(move, null); }, 1000);
+                setTimeout(function () { gameService.makeMove(move, null, chatDiscription); }, 1000);
             }
             else {
-                gameService.makeMove(move, null);
+                gameService.makeMove(move, null, chatDiscription);
             }
         }
         else {

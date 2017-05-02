@@ -13,6 +13,7 @@ interface IDisappear {
 }
 
 module game {
+  let chatDiscription = 'Have fun!';
   export let $rootScope: angular.IScope = null;
   export let $timeout: angular.ITimeoutService = null;
 
@@ -126,18 +127,9 @@ module game {
     log.info("Game got updateUI:", params);
     let playerIdToProposal = params.playerIdToProposal;
      // Only one move/proposal per updateUI
-    didMakeMove = playerIdToProposal && playerIdToProposal[yourPlayerInfo.playerId] != undefined;
+    
     yourPlayerInfo = params.yourPlayerInfo;
     clickCount = 0;
-    proposals = playerIdToProposal ? getProposalsBoard(playerIdToProposal) : null;
-    if (playerIdToProposal) {
-      // If only proposals changed, then return.
-      // I don't want to disrupt the player if he's in the middle of a move.
-      // I delete playerIdToProposal field from params (and so it's also not in currentUpdateUI),
-      // and compare whether the objects are now deep-equal.
-      params.playerIdToProposal = null;
-      if (currentUpdateUI && angular.equals(currentUpdateUI, params)) return;
-    }
 
     playMode = params.playMode;
     currentUpdateUI = params;
@@ -151,25 +143,29 @@ module game {
     if (isFirstMove()) {
       log.info("isFirstMove");
       gameLogic.status = 0;
+      didMakeMove = false;
       // if(getStatus() != 0) {
       //   state = gameLogic.getInitialState(currentUpdateUI.state.board.length, currentUpdateUI.state.board[0].length);
       // } else {
       //   gameLogic.status = 0;
       // }
-  } else {
-      if (params.playMode === 'passAndPlay' || params.playMode === 'playAgainstTheComputer'){
+    } else {
+      if (params.playMode === 'passAndPlay'){
         if(!gameLogic.checkMatch(state)) {
           neededDisappear = true;
           disappear = {row1: state.delta1.row, col1: state.delta1.col, 
             row2: state.delta2.row, col2: state.delta2.col
           }
         }
+        didMakeMove = false;
       } else {
         setTimeout(()=>{if(!gameLogic.checkMatch(state)) {
           neededDisappear = true;
           disappear = {row1: state.delta1.row, col1: state.delta1.col, 
             row2: state.delta2.row, col2: state.delta2.col};
-        }}, 50);
+          }
+          didMakeMove = false;
+        }, 300);
       }
     }
     if(params.state != null) {
@@ -242,9 +238,9 @@ module game {
     
     if (!proposals) {
       if(needDelay) {
-        setTimeout(()=>{gameService.makeMove(move, null)}, 1000);
+        setTimeout(()=>{gameService.makeMove(move, null, chatDiscription)}, 1000);
       } else {
-        gameService.makeMove(move, null)
+        gameService.makeMove(move, null, chatDiscription)
       }
     } else {
       // TODO implement community game later.
