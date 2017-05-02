@@ -32097,20 +32097,20 @@ var game;
         var playerName = [];
         var scores = gameLogic.computeScores(game.state.board, game.state.shownBoard);
         if (game.playMode == 'playAgainstTheComputer') {
-            playerName[0] = "My score";
-            playerName[1] = "Computer";
+            playerName[0] = "You";
+            playerName[1] = "AI";
         }
         else if (game.playMode == 'passAndPlay') {
             playerName[0] = "Player1";
             playerName[1] = "Player2";
         }
         else if (game.playMode == '0') {
-            playerName[0] = "My score";
-            playerName[1] = "Opponent score";
+            playerName[0] = "You";
+            playerName[1] = "Opponent";
         }
         else if (game.playMode == '1') {
-            playerName[1] = "My score";
-            playerName[0] = "Opponent score";
+            playerName[1] = "You";
+            playerName[0] = "Opponent";
         }
         return [playerName, scores];
     }

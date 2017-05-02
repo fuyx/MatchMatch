@@ -251,17 +251,17 @@ module game {
     let playerName : string[] = [];
     let scores : number[] = gameLogic.computeScores(state.board, state.shownBoard);
     if (playMode == 'playAgainstTheComputer') {
-      playerName[0] = "My score";
-      playerName[1] = "Computer";
+      playerName[0] = "You";
+      playerName[1] = "AI";
     } else if (playMode == 'passAndPlay') {
       playerName[0] = "Player1";
       playerName[1] = "Player2";
     } else if (playMode == '0') {
-      playerName[0] = "My score";
-      playerName[1] = "Opponent score";
+      playerName[0] = "You";
+      playerName[1] = "Opponent";
     } else if (playMode == '1') {
-      playerName[1] = "My score";
-      playerName[0] = "Opponent score";
+      playerName[1] = "You";
+      playerName[0] = "Opponent";
     }
     return [playerName, scores];
   }

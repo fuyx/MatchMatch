@@ -28,9 +28,9 @@
   <div class="status" ng-if="game.getStatus() != 0">
     {{game.getScores()[0][0]}}: {{game.getScores()[1][0]}}
     {{game.getScores()[0][1]}}: {{game.getScores()[1][1]}}
-    <div class="history" ng-if="game.getStatus() == 1" ng-click="game.setStatus(2)">
-        Show history
-    </div>
+		<div class="history" ng-if="game.getStatus() == 1" ng-click="game.setStatus(2)">
+			Hint
+		</div>
     <div class="history" ng-if="game.getStatus() == 2" ng-click="game.setStatus(1)">
         Back
     </div>
