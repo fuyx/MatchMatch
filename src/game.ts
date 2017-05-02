@@ -296,7 +296,7 @@ module game {
   }
 
   export function isHistoryMove(row: number, col: number) {
-    let historyMove = gameLogic.getPlayerHistoryMove(currentUpdateUI.state, currentUpdateUI.turnIndex) 
+    let historyMove = gameLogic.getPlayerHistoryMove(currentUpdateUI.state, currentUpdateUI.yourPlayerIndex) 
     log.info("isHistoryMove", historyMove[row][col]);
     return historyMove[row][col];
   }

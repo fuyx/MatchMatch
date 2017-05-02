@@ -274,7 +274,7 @@ var game;
             game.currentUpdateUI.yourPlayerIndex === game.currentUpdateUI.turnIndex; // it's my turn
     }
     function isHistoryMove(row, col) {
-        var historyMove = gameLogic.getPlayerHistoryMove(game.currentUpdateUI.state, game.currentUpdateUI.turnIndex);
+        var historyMove = gameLogic.getPlayerHistoryMove(game.currentUpdateUI.state, game.currentUpdateUI.yourPlayerIndex);
         log.info("isHistoryMove", historyMove[row][col]);
         return historyMove[row][col];
     }
