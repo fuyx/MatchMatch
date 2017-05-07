@@ -188,19 +188,33 @@ module gameLogic {
   }
 
   export function checkMatch(state: IState): boolean {
-    if (state != null) {
-      let delta1 = state.delta1;
-      let delta2 = state.delta2;
-      let board = state.board;
-      if(delta1 != null && delta2 != null) {
-        if(board[delta1.row][delta1.col] != board[delta2.row][delta2.col]) {
-          state.shownBoard[delta1.row][delta1.col] = -1;
-          state.shownBoard[delta2.row][delta2.col] = -1;
-          return false;
+    let ret = true;
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        let found = false;
+        if (state.shownBoard[i][j] == -1) {
+          continue;
+        }
+        let player = state.shownBoard[i][j];
+        let target = state.board[i][j];
+
+        for (let ii = 0; ii < rows; ii++) {
+          for (let jj = 0; jj < cols; jj++) {
+            if ((ii == i && jj == j) || (state.shownBoard[ii][jj] != player)) {
+              continue;
+            } 
+            if (state.board[ii][jj] == target) {
+              found = true;
+            }
+          }
+        }
+        if (!found) {
+          state.shownBoard[i][j] = -1;
+          ret = false;
         }
       }
     }
-    return true;
+    return ret;
   }
 
   export function getPlayerHistoryMove(stateBeforeMove: IState, turnIndexBeforeMove: number): boolean[][] {

@@ -31819,19 +31819,32 @@ var gameLogic;
     }
     gameLogic.createMove = createMove;
     function checkMatch(state) {
-        if (state != null) {
-            var delta1 = state.delta1;
-            var delta2 = state.delta2;
-            var board = state.board;
-            if (delta1 != null && delta2 != null) {
-                if (board[delta1.row][delta1.col] != board[delta2.row][delta2.col]) {
-                    state.shownBoard[delta1.row][delta1.col] = -1;
-                    state.shownBoard[delta2.row][delta2.col] = -1;
-                    return false;
+        var ret = true;
+        for (var i = 0; i < gameLogic.rows; i++) {
+            for (var j = 0; j < gameLogic.cols; j++) {
+                var found = false;
+                if (state.shownBoard[i][j] == -1) {
+                    continue;
+                }
+                var player = state.shownBoard[i][j];
+                var target = state.board[i][j];
+                for (var ii = 0; ii < gameLogic.rows; ii++) {
+                    for (var jj = 0; jj < gameLogic.cols; jj++) {
+                        if ((ii == i && jj == j) || (state.shownBoard[ii][jj] != player)) {
+                            continue;
+                        }
+                        if (state.board[ii][jj] == target) {
+                            found = true;
+                        }
+                    }
+                }
+                if (!found) {
+                    state.shownBoard[i][j] = -1;
+                    ret = false;
                 }
             }
         }
-        return true;
+        return ret;
     }
     gameLogic.checkMatch = checkMatch;
     function getPlayerHistoryMove(stateBeforeMove, turnIndexBeforeMove) {
