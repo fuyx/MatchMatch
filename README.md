@@ -1,4 +1,4 @@
-TicTacToe
+Match Match Game
 =========
 
-TicTacToe game
+Try the game [here](https://thematchmatch.com/#/main)
