@@ -1,4 +1,5 @@
 Match Match Game
 =========
 
-Try the game [here](https://thematchmatch.com/#/main)
+Try the game [here](https://thematchmatch.com/#/main).
+Have fun!
